@@ -6,10 +6,12 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
+#include <functional>
 #include <nlohmann/json.hpp>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
@@ -24,8 +26,7 @@ class IStreamHandler {
   virtual void handle(const nlohmann::json& data) const = 0;
 };
 
-/// Self-sufficient Binance WebSocket client (final; not intended for
-/// inheritance).
+/// Self-sufficient Binance WebSocket client.
 class BinanceWebSocket final {
  public:
   explicit BinanceWebSocket(asio::io_context& ioc);
@@ -47,8 +48,8 @@ class BinanceWebSocket final {
 
   /// List active subscriptions.
   /// - Sends the LIST_SUBSCRIPTIONS command.
-  asio::awaitable<void>
-  list_subscriptions();  // TODO: return std::vector<std::string>
+  /// - Returns a vector of subscribed stream names.
+  asio::awaitable<std::vector<std::string>> list_subscriptions();
 
  protected:
   // Process each incoming message.
@@ -68,6 +69,12 @@ class BinanceWebSocket final {
   std::atomic<int> next_request_id_{1};
   std::atomic_bool connected_{false};
 
-  std::unordered_map<std::string, std::unique_ptr<IStreamHandler>> handlers_;
-  mutable std::shared_mutex handlers_mutex_;
+  // Stream handlers (hot path).
+  std::unordered_map<std::string, std::unique_ptr<IStreamHandler>>
+      stream_handlers_;
+  mutable std::shared_mutex stream_handlers_mutex_;
+  // Request handlers.
+  std::unordered_map<int, std::function<void(const nlohmann::json&)>>
+      request_handlers_;
+  mutable std::shared_mutex request_handlers_mutex_;
 };

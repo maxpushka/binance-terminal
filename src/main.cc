@@ -13,11 +13,21 @@ int main() {
   boost::asio::co_spawn(
       io_context,
       [&ws]() -> boost::asio::awaitable<void> {
+        // Subscribe to markets
         const std::string market = "btcusdt";
         co_await ws.subscribe(market + "@aggTrade",
                               std::make_unique<TradeHandler>());
         co_await ws.subscribe(market + "@depth",
                               std::make_unique<OrderBookHandler>());
+
+        // List active subscriptions.
+        const auto subscriptions = co_await ws.list_subscriptions();
+        std::stringstream ss;
+        ss << "Subscribed to streams: ";
+        for (const auto& stream : subscriptions) {
+          ss << stream << ", ";
+        }
+        std::cout << ss.str() << std::endl;
       },
       boost::asio::detached);
 
