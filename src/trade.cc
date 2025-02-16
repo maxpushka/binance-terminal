@@ -4,12 +4,21 @@
 
 #include "nlohmann/json.hpp"
 
+struct Trade {
+  double price;
+  double quantity;
+  uint64_t timestamp;
+};
+
+void from_json(const nlohmann::json& j, Trade& t) {
+  t.price = std::stod(j.at("p").get<std::string>());
+  t.quantity = std::stod(j.at("q").get<std::string>());
+  j.at("T").get_to(t.timestamp);
+}
+
 void TradeHandler::handle(const nlohmann::json& data) const {
   try {
-    const Trade trade{std::stod(data["p"].get<std::string>()),
-                      std::stod(data["q"].get<std::string>()),
-                      data["T"].get<decltype(Trade::timestamp)>()};
-
+    const Trade trade = data.get<Trade>();
     std::cout << "Trade: Price=" << trade.price
               << ", Quantity=" << trade.quantity << ", Time=" << trade.timestamp
               << '\n';

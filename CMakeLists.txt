@@ -17,13 +17,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdangling-gsl -Wreturn-stack-address")
 # ==================================================
 include(FetchContent)
 
-# ------------------- FTXUI -------------------
-# FetchContent_Declare(ftxui
-#   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-#   GIT_TAG d75108e96058b6e00da6306a7d99c9555f645434 
-# )
-# FetchContent_MakeAvailable(ftxui)
-
 # ------------------- Boost.Asio & Boost.Beast -------------------
 find_package(Boost 1.85 REQUIRED COMPONENTS system)
 find_package(OpenSSL REQUIRED)
@@ -31,6 +24,13 @@ find_package(OpenSSL REQUIRED)
 # ------------------- nlohmann/json -------------------
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
+
+# ------------------- FTXUI -------------------
+# FetchContent_Declare(ftxui
+#   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
+#   GIT_TAG d75108e96058b6e00da6306a7d99c9555f645434 
+# )
+# FetchContent_MakeAvailable(ftxui)
 
 # ------------------- Google Test -------------------
 # message(STATUS "Downloading github.com/google/googletest")
