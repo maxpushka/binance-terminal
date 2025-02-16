@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket.h"
+#include "stream_handler.h"
 
 // A simple Trade structure.
 struct Trade {

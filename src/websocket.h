@@ -13,18 +13,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "stream_handler.h"
+
 namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
-
-/// Interface that all stream handlers must implement.
-class IStreamHandler {
- public:
-  virtual ~IStreamHandler() = default;
-
-  /// Handle the data part of a combined stream event.
-  virtual void handle(const nlohmann::json& data) const = 0;
-};
 
 /// Self-sufficient Binance WebSocket client.
 class BinanceWebSocket final {

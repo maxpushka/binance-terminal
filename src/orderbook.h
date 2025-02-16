@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket.h"
+#include "stream_handler.h"
 
 struct OrderBookSnapshot {
   int64_t last_update_id;
