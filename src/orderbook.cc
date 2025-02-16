@@ -4,9 +4,8 @@
 
 #include "nlohmann/json.hpp"
 
-std::vector<std::string>
-BinanceOrderBookWebSocketClient::get_subscription_streams() const {
-  return {symbol_ + "@depth"};
+std::string BinanceOrderBookWebSocketClient::get_subscription_streams() const {
+  return symbol_ + "@depth";
 }
 
 void BinanceOrderBookWebSocketClient::process_message(
@@ -14,7 +13,7 @@ void BinanceOrderBookWebSocketClient::process_message(
   try {
     using json = nlohmann::json;
     auto j = json::parse(message);
-    OrderBookUpdate update{
+    const OrderBookUpdate update{
         j["U"].get<decltype(OrderBookUpdate::first_update_id)>(),
         j["u"].get<decltype(OrderBookUpdate::last_update_id)>(),
         j["b"].get<decltype(OrderBookUpdate::bids)>(),
@@ -25,6 +24,6 @@ void BinanceOrderBookWebSocketClient::process_message(
               << update.last_update_id << "(bids: " << update.bids.size()
               << ", asks: " << update.asks.size() << ")\n";
   } catch (const std::exception& e) {
-    std::cerr << "JSON parse error: " << e.what() << '\n';
+    std::cerr << "JSON parse error: " << e.what() << '\n' << message << '\n';
   }
 }

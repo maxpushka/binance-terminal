@@ -14,10 +14,10 @@ class BinanceTradeWebSocketClient : public BinanceWebSocketBase {
   // Inherit the constructor.
   using BinanceWebSocketBase::BinanceWebSocketBase;
 
- protected:
   // Specify the handshake target for trade streams.
-  std::vector<std::string> get_subscription_streams() const override;
+  [[nodiscard]] std::string get_subscription_streams() const;
 
+ protected:
   // Process a trade message.
   void process_message(const std::string& message) override;
 };
