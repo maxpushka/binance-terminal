@@ -4,22 +4,16 @@
 
 #include "nlohmann/json.hpp"
 
-std::string BinanceTradeWebSocketClient::get_subscription_streams() const {
-  return symbol_ + "@aggTrade";
-}
-
-void BinanceTradeWebSocketClient::process_message(const std::string& message) {
+void TradeHandler::handle(const nlohmann::json& data) const {
   try {
-    using json = nlohmann::json;
-    auto j = json::parse(message);
-    const Trade trade{std::stod(j["p"].get<std::string>()),
-                      std::stod(j["q"].get<std::string>()),
-                      j["T"].get<decltype(Trade::timestamp)>()};
+    const Trade trade{std::stod(data["p"].get<std::string>()),
+                      std::stod(data["q"].get<std::string>()),
+                      data["T"].get<decltype(Trade::timestamp)>()};
 
     std::cout << "Trade: Price=" << trade.price
               << ", Quantity=" << trade.quantity << ", Time=" << trade.timestamp
               << '\n';
   } catch (const std::exception& e) {
-    std::cerr << "JSON parse error: " << e.what() << '\n' << message << '\n';
+    std::cerr << "JSON parse error: " << e.what() << '\n' << data << '\n';
   }
 }

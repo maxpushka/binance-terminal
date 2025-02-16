@@ -2,30 +2,28 @@
 
 #include "orderbook.h"
 #include "trade.h"
+#include "websocket.h"
 
 int main() {
-  try {
-    const std::string market = "btcusdt";
+  boost::asio::io_context io_context;
 
-    asio::io_context ioc;
-    BinanceTradeWebSocketClient trades(ioc, market);
-    BinanceOrderBookWebSocketClient orderbook(ioc, market);
+  // Create the Binance WebSocket client for a given symbol.
+  BinanceWebSocket ws(io_context);
 
-    // Schedule the asynchronous run tasks.
-    boost::asio::co_spawn(ioc, trades.run(), boost::asio::detached);
-    boost::asio::co_spawn(ioc, orderbook.run(), boost::asio::detached);
+  boost::asio::co_spawn(
+      io_context,
+      [&ws]() -> boost::asio::awaitable<void> {
+        const std::string market = "btcusdt";
+        co_await ws.subscribe(market + "@aggTrade",
+                              std::make_unique<TradeHandler>());
+        co_await ws.subscribe(market + "@depth",
+                              std::make_unique<OrderBookHandler>());
+      },
+      boost::asio::detached);
 
-    // Schedule subscriptions if needed.
-    boost::asio::co_spawn(ioc,
-                          trades.subscribe(trades.get_subscription_streams()),
-                          boost::asio::detached);
-    boost::asio::co_spawn(
-        ioc, orderbook.subscribe(orderbook.get_subscription_streams()),
-        boost::asio::detached);
+  // Launch the WebSocket connection run loop.
+  co_spawn(io_context, ws.run(), boost::asio::detached);
 
-    // Process events.
-    ioc.run();
-  } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << '\n';
-  }
+  io_context.run();
+  return 0;
 }

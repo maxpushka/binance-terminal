@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket_base.h"
+#include "websocket.h"
 
 // A simple Trade structure.
 struct Trade {
@@ -9,15 +9,7 @@ struct Trade {
   uint64_t timestamp;
 };
 
-class BinanceTradeWebSocketClient : public BinanceWebSocketBase {
+class TradeHandler final : public IStreamHandler {
  public:
-  // Inherit the constructor.
-  using BinanceWebSocketBase::BinanceWebSocketBase;
-
-  // Specify the handshake target for trade streams.
-  [[nodiscard]] std::string get_subscription_streams() const;
-
- protected:
-  // Process a trade message.
-  void process_message(const std::string& message) override;
+  void handle(const nlohmann::json& data) const override;
 };

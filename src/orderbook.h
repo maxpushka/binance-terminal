@@ -1,6 +1,6 @@
 #pragma once
 
-#include "websocket_base.h"
+#include "websocket.h"
 
 struct OrderBookSnapshot {
   int64_t last_update_id;
@@ -15,15 +15,7 @@ struct OrderBookUpdate {
   std::vector<std::vector<std::string>> asks;
 };
 
-class BinanceOrderBookWebSocketClient : public BinanceWebSocketBase {
+class OrderBookHandler final : public IStreamHandler {
  public:
-  // Inherit the constructor.
-  using BinanceWebSocketBase::BinanceWebSocketBase;
-
-  // Specify the handshake target for order book streams.
-  [[nodiscard]] std::string get_subscription_streams() const;
-
- protected:
-  // Process an order book message.
-  void process_message(const std::string& message) override;
+  void handle(const nlohmann::json& data) const override;
 };

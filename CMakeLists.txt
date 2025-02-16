@@ -45,18 +45,18 @@ FetchContent_MakeAvailable(json)
 # ==================================================
 
 # ------------------- Main Binary -------------------
-add_executable(${PROJECT_NAME} 
-    src/main.cc
-    src/websocket_base.cc
-    src/trade.cc
-    src/orderbook.cc
+add_executable(${PROJECT_NAME}
+        src/main.cc
+        src/websocket.cc
+        src/trade.cc
+        src/orderbook.cc
 )
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE
-    Boost::system
-    OpenSSL::SSL
-    OpenSSL::Crypto
-    nlohmann_json::nlohmann_json
+        Boost::system
+        OpenSSL::SSL
+        OpenSSL::Crypto
+        nlohmann_json::nlohmann_json
 )
 
 # ------------------- Tests -------------------
