@@ -3,8 +3,6 @@
 #include <atomic>
 #include <boost/asio.hpp>
 #include <boost/asio/awaitable.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/beast/ssl.hpp>
 #include <boost/beast/websocket.hpp>
 #include <functional>
 #include <nlohmann/json.hpp>
@@ -13,25 +11,23 @@
 #include <unordered_map>
 #include <vector>
 
-#include "stream_handler.h"
+#include "websocket.h"
+#include "websocket_streams_handler.h"
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
 
 /// Self-sufficient Binance WebSocket client.
-class BinanceWebSocket final {
+class WebSocketStreams final : public WebSocket {
  public:
-  explicit BinanceWebSocket(asio::io_context& ioc);
-  ~BinanceWebSocket() = default;
-
-  // Coroutine-based entry point.
-  asio::awaitable<void> run();
+  explicit WebSocketStreams(asio::io_context& ioc);
+  ~WebSocketStreams() override = default;
 
   /// Subscribe to a stream:
   /// - Registers the handler for the given stream.
   /// - Sends the SUBSCRIBE command.
-  asio::awaitable<void> subscribe(const std::string& stream,
+  asio::awaitable<void> subscribe(const std::string& market,
                                   std::unique_ptr<IStreamHandler> handler);
 
   /// Unsubscribe from a stream:
@@ -46,21 +42,10 @@ class BinanceWebSocket final {
 
  protected:
   // Process each incoming message.
-  void process_message(const std::string& message);
-
-  // Helper to send a JSON command message.
-  asio::awaitable<void> send_json(const std::string& message);
-
-  asio::ssl::context ssl_ctx_;
-  asio::ip::tcp::resolver resolver_;
-  websocket::stream<beast::ssl_stream<asio::ip::tcp::socket>> ws_;
+  void process_message(const std::string& message) override;
 
  private:
-  asio::awaitable<void> wait_for_connection() const;
-  asio::awaitable<void> establish_connection();
-
   std::atomic<int> next_request_id_{1};
-  std::atomic_bool connected_{false};
 
   // Stream handlers (hot path).
   std::unordered_map<std::string, std::unique_ptr<IStreamHandler>>

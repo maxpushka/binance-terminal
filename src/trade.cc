@@ -16,6 +16,10 @@ void from_json(const nlohmann::json& j, Trade& t) {
   j.at("T").get_to(t.timestamp);
 }
 
+[[nodiscard]] std::string TradeHandler::stream_name() const noexcept {
+  return "aggTrade";
+}
+
 void TradeHandler::handle(const nlohmann::json& data) const {
   try {
     const Trade trade = data.get<Trade>();

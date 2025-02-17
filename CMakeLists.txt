@@ -47,7 +47,8 @@ FetchContent_MakeAvailable(json)
 # ------------------- Main Binary -------------------
 add_executable(${PROJECT_NAME}
         src/main.cc
-        src/websocket.cc
+        src/exchange/websocket.cc
+        src/exchange/websocket_streams.cc
         src/trade.cc
         src/orderbook.cc
 )

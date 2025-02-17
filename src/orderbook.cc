@@ -30,6 +30,10 @@ void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   j.at("a").get_to(obu.asks);
 }
 
+[[nodiscard]] std::string OrderBookHandler::stream_name() const noexcept {
+  return "depth@100ms";
+}
+
 void OrderBookHandler::handle(const nlohmann::json& data) const {
   try {
     const OrderBookUpdate update = data.get<OrderBookUpdate>();
