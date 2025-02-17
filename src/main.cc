@@ -30,9 +30,18 @@ int main() {
           std::cerr << "Error: " << e.what() << std::endl;
           co_return;
         }
+
         std::stringstream ss;
+        constexpr size_t limit = 3;
         ss << "Order book snapshot for " << market << ":\n";
-        for (const auto& bid : snapshot.bids) {
+        ss << "Bids:\n";
+        for (size_t i = 0; i < snapshot.bids.size() && i < limit; ++i) {
+          const auto bid = snapshot.bids[i];
+          ss << "  " << bid[0] << " @ " << bid[1] << "\n";
+        }
+        ss << "Asks:\n";
+        for (size_t i = 0; i < snapshot.asks.size() && i < limit; ++i) {
+          const auto bid = snapshot.asks[i];
           ss << "  " << bid[0] << " @ " << bid[1] << "\n";
         }
         std::cout << ss.str() << std::endl;

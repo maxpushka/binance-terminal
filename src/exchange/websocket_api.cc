@@ -66,14 +66,18 @@ WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
     request_handlers_.erase(id);
   }
 
+  // Parse the response.
   nlohmann::json response = fut.get();
-  if (!response.contains("result") || !response["result"].is_null()) {
+  if (!response.contains("result") || response["result"].is_null()) {
     std::cerr << "Failed to fetch order book snapshot for '" << uppercaseMarket
               << "': " << response << "\n";
+    throw std::runtime_error("failed to fetch order book snapshot");
   }
+  nlohmann::json& result = response["result"];
+  auto snapshot = result.get<OrderBookSnapshot>();
   std::cout << "Fetched order book snapshot for " << uppercaseMarket << " ("
             << id << ")...\n";
-  co_return response.get<OrderBookSnapshot>();
+  co_return snapshot;
 }
 
 void WebsocketAPI::process_message(const std::string& message) {
