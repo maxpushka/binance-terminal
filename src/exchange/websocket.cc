@@ -1,11 +1,21 @@
-#include "websocket.h"
-
+module;
 #include <openssl/ssl.h>
 
-#include <boost/asio/connect.hpp>
-#include <boost/asio/this_coro.hpp>
+#include <atomic>
+#include <boost/asio.hpp>
+#include <boost/asio/awaitable.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/beast/core/buffers_to_string.hpp>
+#include <boost/beast/core/flat_buffer.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket/ssl.hpp>
+#include <boost/beast/websocket/stream.hpp>
+#include <boost/utility/string_view_fwd.hpp>
 #include <iostream>
+#include <nlohmann/json.hpp>
+#include <shared_mutex>
+
+module exchange;
 
 using namespace boost::asio;
 using namespace boost::beast;
@@ -81,7 +91,7 @@ asio::awaitable<void> WebSocket::run() {
   co_await establish_connection();
   while (true) {
     flat_buffer buffer;
-    co_await ws_.async_read(buffer, use_awaitable);
+    co_await ws_.async_read(buffer, asio::use_awaitable);
     std::string message = buffers_to_string(buffer.data());
     process_message(message);
   }

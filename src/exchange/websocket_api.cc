@@ -1,7 +1,13 @@
-#include "websocket_api.h"
-
+module;
+#include <atomic>
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/use_awaitable.hpp>
+#include <future>
 #include <iostream>
+#include <nlohmann/json.hpp>
 #include <regex>
+
+module exchange;
 
 void from_json(const nlohmann::json& j, OrderBookSnapshot& obs) {
   j.at("lastUpdateId").get_to(obs.last_update_id);

@@ -1,16 +1,17 @@
-cmake_minimum_required(VERSION 3.30 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.30 FATAL_ERROR) # v3.30 is required for C++23 `import std;` support
 project(terminal LANGUAGES CXX)
 
 # ==================================================
 # = Compilation Settings
 # ==================================================
 
-# Set the compile flags
+# Configure options
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdangling-gsl -Wreturn-stack-address")
+set(CMAKE_CXX_SCAN_FOR_MODULES 1)
 
 # ==================================================
 # = Dependencies Setup
@@ -18,7 +19,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wdangling-gsl -Wreturn-stack-address")
 include(FetchContent)
 
 # ------------------- Boost.Asio & Boost.Beast -------------------
-find_package(Boost 1.85 REQUIRED COMPONENTS system)
+find_package(Boost 1.87 REQUIRED COMPONENTS system)
 find_package(OpenSSL REQUIRED)
 
 # ------------------- nlohmann/json -------------------
@@ -44,22 +45,31 @@ FetchContent_MakeAvailable(json)
 # = Executable Definitions
 # ==================================================
 
-# ------------------- Main Binary -------------------
-add_executable(${PROJECT_NAME}
-        src/main.cc
+add_library(exchange STATIC)
+target_sources(exchange
+        PUBLIC FILE_SET cxx_modules
+        TYPE CXX_MODULES
+        FILES src/exchange/exchange.ccm
+        PRIVATE
         src/exchange/websocket.cc
         src/exchange/websocket_streams.cc
         src/exchange/websocket_api.cc
-        src/trade.cc
-        src/orderbook.cc
 )
-target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(exchange PUBLIC
         Boost::system
         OpenSSL::SSL
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
 )
+
+# ------------------- Main Binary -------------------
+add_executable(${PROJECT_NAME}
+        src/main.cc
+        src/trade.cc
+        src/orderbook.cc
+)
+target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
+target_link_libraries(${PROJECT_NAME} PRIVATE exchange)
 
 # ------------------- Tests -------------------
 # enable_testing()

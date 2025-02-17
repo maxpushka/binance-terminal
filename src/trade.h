@@ -1,6 +1,8 @@
 #pragma once
+#include <nlohmann/json.hpp>
+#include <string>
 
-#include "exchange/websocket_streams_handler.h"
+import exchange;
 
 struct TradeHandler final : IStreamHandler {
   [[nodiscard]] std::string stream_name() const noexcept override;

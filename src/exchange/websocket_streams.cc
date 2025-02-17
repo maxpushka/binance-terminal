@@ -1,11 +1,16 @@
-#include "websocket_streams.h"
-
+module;
+#include <boost/asio/steady_timer.hpp>
+#include <boost/asio/use_awaitable.hpp>
 #include <chrono>
 #include <future>
 #include <iostream>
+#include <shared_mutex>
+
+#include "nlohmann/json.hpp"
+
+module exchange;
 
 using namespace boost::asio;
-using namespace boost::beast;
 
 WebSocketStreams::WebSocketStreams(asio::io_context& ioc)
     : WebSocket(ioc, "stream.binance.com", "9443", "/stream") {}
