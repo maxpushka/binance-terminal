@@ -4,26 +4,35 @@
 
 #include "nlohmann/json.hpp"
 
-struct OrderBookSnapshot {
-  int64_t last_update_id;
-  std::vector<std::vector<std::string>> bids;
-  std::vector<std::vector<std::string>> asks;
-};
-
-void from_json(const nlohmann::json& j, OrderBookSnapshot& obs) {
-  j.at("lastUpdateId").get_to(obs.last_update_id);
-  obs.bids = j.at("bids").get<decltype(OrderBookSnapshot::bids)>();
-  obs.asks = j.at("asks").get<decltype(OrderBookSnapshot::asks)>();
-}
-
 struct OrderBookUpdate {
   int64_t first_update_id;
   int64_t last_update_id;
   std::vector<std::vector<std::string>> bids;
   std::vector<std::vector<std::string>> asks;
+  uint64_t timestamp;
 };
 
 void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
+  // {
+  //   "e": "depthUpdate", // Event type
+  //   "E": 1672515782136, // Event time
+  //   "s": "BNBBTC",      // Symbol
+  //   "U": 157,           // First update ID in event
+  //   "u": 160,           // Final update ID in event
+  //   "b": [              // Bids to be updated
+  //     [
+  //       "0.0024",       // Price level to be updated
+  //       "10"            // Quantity
+  //     ]
+  //   ],
+  //   "a": [              // Asks to be updated
+  //     [
+  //       "0.0026",       // Price level to be updated
+  //       "100"           // Quantity
+  //     ]
+  //   ]
+  // }
+  j.at("E").get_to(obu.timestamp);
   j.at("U").get_to(obu.first_update_id);
   j.at("u").get_to(obu.last_update_id);
   j.at("b").get_to(obu.bids);

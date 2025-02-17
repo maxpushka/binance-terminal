@@ -183,9 +183,9 @@ void WebSocketStreams::process_message(const std::string& message) {
       if (const auto it = stream_handlers_.find(streamName);
           it != stream_handlers_.end()) {
         it->second->handle(data);
-      } else {
-        std::cerr << "No handler registered for stream: " << streamName << "\n";
+        return;
       }
+      std::cerr << "No handler registered for stream: " << streamName << "\n";
     }
 
     // Then process request events if present.
@@ -200,10 +200,11 @@ void WebSocketStreams::process_message(const std::string& message) {
         request_handlers_.erase(it);
         lock.unlock();
         handler(j);
+        return;
       }
     }
 
-    std::cout << "Unknown message: " << j << "\n";
+    std::cout << "Unknown WS Streams message: " << j << "\n";
   } catch (const std::exception& ex) {
     std::cerr << "Error parsing message: " << ex.what() << "\n";
   }

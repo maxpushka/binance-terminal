@@ -49,6 +49,7 @@ add_executable(${PROJECT_NAME}
         src/main.cc
         src/exchange/websocket.cc
         src/exchange/websocket_streams.cc
+        src/exchange/websocket_api.cc
         src/trade.cc
         src/orderbook.cc
 )
@@ -86,4 +87,3 @@ if (supported)
 else ()
     message(WARNING "IPO / LTO not supported: <${error}>")
 endif ()
-

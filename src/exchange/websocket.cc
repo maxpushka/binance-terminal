@@ -1,10 +1,11 @@
 #include "websocket.h"
 
-#include <iostream>
-#include <boost/beast/core/buffers_to_string.hpp>
+#include <openssl/ssl.h>
+
 #include <boost/asio/connect.hpp>
 #include <boost/asio/this_coro.hpp>
-#include <openssl/ssl.h>
+#include <boost/beast/core/buffers_to_string.hpp>
+#include <iostream>
 
 using namespace boost::asio;
 using namespace boost::beast;
