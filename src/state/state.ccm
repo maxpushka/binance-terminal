@@ -1,0 +1,39 @@
+module;
+#include <string>
+
+#include "nlohmann/json.hpp"
+#include "rpp/subjects/publish_subject.hpp"
+
+export module state;
+
+import exchange;
+
+export struct Trade {
+  double price;
+  double quantity;
+  uint64_t timestamp;
+};
+
+// Use ReactivePlusPlus's publish_subject as our global event bus.
+export inline rpp::subjects::publish_subject<Trade>& get_trade_subject() {
+  static rpp::subjects::publish_subject<Trade> subject;
+  return subject;
+}
+
+export struct TradeHandler final : IStreamHandler {
+  [[nodiscard]] std::string stream_name() const noexcept override;
+  void handle(const nlohmann::json& data) const override;
+};
+
+export struct OrderBookUpdate {
+  int64_t first_update_id;
+  int64_t last_update_id;
+  std::vector<std::vector<std::string>> bids;
+  std::vector<std::vector<std::string>> asks;
+  uint64_t timestamp;
+};
+
+export struct OrderBookHandler final : IStreamHandler {
+  [[nodiscard]] std::string stream_name() const noexcept override;
+  void handle(const nlohmann::json& data) const override;
+};

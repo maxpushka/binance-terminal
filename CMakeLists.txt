@@ -59,6 +59,8 @@ FetchContent_MakeAvailable(ftxui)
 # = Executable Definitions
 # ==================================================
 
+# ------------------- Libraries -------------------
+
 add_library(exchange STATIC)
 target_sources(exchange
         PUBLIC FILE_SET cxx_modules
@@ -77,14 +79,25 @@ target_link_libraries(exchange PUBLIC
         spdlog::spdlog
 )
 
-# ------------------- Main Binary -------------------
-add_executable(${PROJECT_NAME}
-        src/main.cc
-        src/trade.cc
-        #        src/orderbook.cc
+add_library(state STATIC)
+target_sources(state
+        PUBLIC FILE_SET cxx_modules
+        TYPE CXX_MODULES
+        FILES src/state/state.ccm
+        PRIVATE
+        src/state/trade.cc
+        src/state/order_book.cc
 )
+target_link_libraries(state PUBLIC
+        spdlog::spdlog
+        exchange
+        rpp
+)
+
+# ------------------- Main Binary -------------------
+add_executable(${PROJECT_NAME} src/main.cc)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE exchange ftxui::component rpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE exchange state ftxui::component)
 
 # ------------------- Tests -------------------
 # enable_testing()

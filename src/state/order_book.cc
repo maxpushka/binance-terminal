@@ -1,16 +1,10 @@
-#include "orderbook.h"
-
-#include <iostream>
-
+module;
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
-struct OrderBookUpdate {
-  int64_t first_update_id;
-  int64_t last_update_id;
-  std::vector<std::vector<std::string>> bids;
-  std::vector<std::vector<std::string>> asks;
-  uint64_t timestamp;
-};
+module state;
+
+import exchange;
 
 void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   // {
@@ -44,12 +38,15 @@ void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
 }
 
 void OrderBookHandler::handle(const nlohmann::json& data) const {
+  OrderBookUpdate update{};
   try {
-    const OrderBookUpdate update = data.get<OrderBookUpdate>();
-    std::cout << "Order book update: " << update.first_update_id << " -> "
-              << update.last_update_id << "(bids: " << update.bids.size()
-              << ", asks: " << update.asks.size() << ")\n";
+    update = data.get<OrderBookUpdate>();
   } catch (const std::exception& e) {
-    std::cerr << "JSON parse error: " << e.what() << '\n' << data << '\n';
+    spdlog::error("JSON parse error: {} (`{}`)", e.what(), data.dump());
+    return;
   }
+
+  spdlog::debug("order book update: {} -> {} (bids: {}, asks: {})",
+                update.first_update_id, update.last_update_id,
+                update.bids.size(), update.asks.size());
 }

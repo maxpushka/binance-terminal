@@ -1,6 +1,8 @@
-#include "trade.h"
+module;
+#include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
-#include <iostream>
+module state;
 
 inline void from_json(const nlohmann::json& j, Trade& t) {
   t.price = std::stod(j.at("p").get<std::string>());
@@ -15,8 +17,8 @@ void TradeHandler::handle(const nlohmann::json& data) const {
   try {
     trade = data.get<Trade>();
   } catch (const std::exception& e) {
-    std::cerr << "JSON parse error in TradeHandler: " << e.what() << "\n"
-              << data << "\n";
+    spdlog::error("JSON parse error: {} (`{}`)", e.what(), data.dump());
+    return;
   }
   get_trade_subject().get_observer().on_next(trade);
 }

@@ -9,9 +9,9 @@
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "ftxui/dom/elements.hpp"
-#include "trade.h"
 
 import exchange;
+import state;
 
 using namespace std::chrono_literals;
 using namespace ftxui;
