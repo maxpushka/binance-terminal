@@ -26,12 +26,26 @@ find_package(OpenSSL REQUIRED)
 FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
 FetchContent_MakeAvailable(json)
 
+# ------------------- spdlog -------------------
+FetchContent_Declare(spdlog URL https://github.com/gabime/spdlog/archive/refs/tags/v1.15.1.tar.gz)
+FetchContent_MakeAvailable(spdlog)
+
+# ------------------- ReactivePlusPlus -------------------
+FetchContent_Declare(
+        rpp
+        GIT_REPOSITORY https://github.com/victimsnino/ReactivePlusPlus.git
+        GIT_TAG v2.2.2
+        GIT_SHALLOW 1
+)
+FetchContent_MakeAvailable(rpp)
+
 # ------------------- FTXUI -------------------
-# FetchContent_Declare(ftxui
-#   GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-#   GIT_TAG d75108e96058b6e00da6306a7d99c9555f645434 
-# )
-# FetchContent_MakeAvailable(ftxui)
+FetchContent_Declare(ftxui
+        GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
+        GIT_TAG d75108e96058b6e00da6306a7d99c9555f645434
+        GIT_SHALLOW 1
+)
+FetchContent_MakeAvailable(ftxui)
 
 # ------------------- Google Test -------------------
 # message(STATUS "Downloading github.com/google/googletest")
@@ -60,16 +74,17 @@ target_link_libraries(exchange PUBLIC
         OpenSSL::SSL
         OpenSSL::Crypto
         nlohmann_json::nlohmann_json
+        spdlog::spdlog
 )
 
 # ------------------- Main Binary -------------------
 add_executable(${PROJECT_NAME}
         src/main.cc
         src/trade.cc
-        src/orderbook.cc
+        #        src/orderbook.cc
 )
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE exchange)
+target_link_libraries(${PROJECT_NAME} PRIVATE exchange ftxui::component rpp)
 
 # ------------------- Tests -------------------
 # enable_testing()
@@ -78,6 +93,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE exchange)
 # target_include_directories(${PROJECT_NAME}_tests PRIVATE src)
 # target_link_libraries(${PROJECT_NAME}_tests
 #         GTest::gtest_main
+#         Boost::system
 # )
 # target_compile_definitions(${PROJECT_NAME}_tests PRIVATE UNIT_TEST)
 # include(GoogleTest)
@@ -93,7 +109,7 @@ check_ipo_supported(RESULT supported OUTPUT error)
 if (supported)
     message(STATUS "IPO / LTO enabled")
     set_target_properties(${PROJECT_NAME} PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-    # set_target_property(${PROJECT_NAME}_tests PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    # set_target_properties(${PROJECT_NAME}_tests PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 else ()
     message(WARNING "IPO / LTO not supported: <${error}>")
 endif ()

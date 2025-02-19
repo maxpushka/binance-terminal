@@ -1,11 +1,12 @@
 module;
 #include <atomic>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/use_awaitable.hpp>
 #include <future>
-#include <iostream>
-#include <nlohmann/json.hpp>
 #include <regex>
+
+#include "boost/asio/steady_timer.hpp"
+#include "boost/asio/use_awaitable.hpp"
+#include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 module exchange;
 
@@ -48,8 +49,8 @@ WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
   const std::string json = R"({"method": "depth", "params": {"symbol":")" +
                            uppercaseMarket + R"(","limit":5000}, "id": )" +
                            std::to_string(id) + "}";
-  std::cout << "Requesting order book snapshot for " << uppercaseMarket << " ("
-            << id << ")...\n";
+  spdlog::debug("requesting order book snapshot for '{}' (id={})",
+                uppercaseMarket, id);
   co_await send_json(json);
 
   const auto executor = co_await asio::this_coro::executor;
@@ -69,14 +70,14 @@ WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
   // Parse the response.
   nlohmann::json response = fut.get();
   if (!response.contains("result") || response["result"].is_null()) {
-    std::cerr << "Failed to fetch order book snapshot for '" << uppercaseMarket
-              << "': " << response << "\n";
+    spdlog::error("failed to fetch order book snapshot for '{}': {}",
+                  uppercaseMarket, response.dump());
     throw std::runtime_error("failed to fetch order book snapshot");
   }
   nlohmann::json& result = response["result"];
   auto snapshot = result.get<OrderBookSnapshot>();
-  std::cout << "Fetched order book snapshot for " << uppercaseMarket << " ("
-            << id << ")...\n";
+  spdlog::debug("fetched order book snapshot for '{}' (id={})", uppercaseMarket,
+                id);
   co_return snapshot;
 }
 
@@ -86,7 +87,7 @@ void WebsocketAPI::process_message(const std::string& message) {
 
     // Then process request events if present.
     if (!j.contains("id")) {
-      std::cerr << "Unknown WS API message: " << j << "\n";
+      spdlog::error("unknown WS API message: {}", j.dump());
       return;
     }
 
@@ -102,6 +103,6 @@ void WebsocketAPI::process_message(const std::string& message) {
       handler(j);
     }
   } catch (const std::exception& ex) {
-    std::cerr << "Error parsing message: " << ex.what() << "\n";
+    spdlog::error("error parsing message: {}", ex.what());
   }
 }

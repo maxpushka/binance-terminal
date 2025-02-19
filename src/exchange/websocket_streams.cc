@@ -1,12 +1,12 @@
 module;
-#include <boost/asio/steady_timer.hpp>
-#include <boost/asio/use_awaitable.hpp>
 #include <chrono>
 #include <future>
-#include <iostream>
 #include <shared_mutex>
 
+#include "boost/asio/steady_timer.hpp"
+#include "boost/asio/use_awaitable.hpp"
 #include "nlohmann/json.hpp"
+#include "spdlog/spdlog.h"
 
 module exchange;
 
@@ -26,7 +26,7 @@ asio::awaitable<void> WebSocketStreams::subscribe(
     // Write-lock the handlers map to register the new handler.
     std::unique_lock lock(stream_handlers_mutex_);
     if (stream_handlers_.contains(stream)) {
-      std::cerr << "Stream " << stream << " is already subscribed.\n";
+      spdlog::error("stream {} is already subscribed", stream);
       co_return;
     }
     stream_handlers_.emplace(stream, std::move(handler));
@@ -47,7 +47,7 @@ asio::awaitable<void> WebSocketStreams::subscribe(
 
   const std::string json = R"({"method": "SUBSCRIBE", "params": [")" + stream +
                            R"("], "id": )" + std::to_string(id) + "}";
-  std::cout << "Subscribing to " << stream << " (" << id << ")...\n";
+  spdlog::debug("subscribing to {} (id={})", stream, id);
   co_await send_json(json);
 
   const auto executor = co_await asio::this_coro::executor;
@@ -66,12 +66,12 @@ asio::awaitable<void> WebSocketStreams::subscribe(
 
   if (nlohmann::json response = fut.get();
       !response.contains("result") || !response["result"].is_null()) {
-    std::cerr << "Subscription failed for stream: " << stream << "\n";
+    spdlog::error("subscription failed for stream: {}", stream);
     // Remove the handler if subscription confirmation fails.
     std::unique_lock lock(stream_handlers_mutex_);
     stream_handlers_.erase(stream);
   }
-  std::cout << "Subscribed to " << stream << " (" << id << ")...\n";
+  spdlog::debug("subscribed to {} (id={})", stream, id);
   co_return;
 }
 
@@ -83,7 +83,7 @@ asio::awaitable<void> WebSocketStreams::unsubscribe(const std::string& stream) {
     std::unique_lock lock(stream_handlers_mutex_);
     const auto it = stream_handlers_.find(stream);
     if (it == stream_handlers_.end()) {
-      std::cerr << "Stream " << stream << " is not subscribed.\n";
+      spdlog::error("stream {} is not subscribed", stream);
       co_return;
     }
     stream_handlers_.erase(it);
@@ -104,7 +104,7 @@ asio::awaitable<void> WebSocketStreams::unsubscribe(const std::string& stream) {
 
   const std::string json = R"({"method": "UNSUBSCRIBE", "params": [")" +
                            stream + R"("], "id": )" + std::to_string(id) + "}";
-  std::cout << "Unsubscribing from " << stream << " (" << id << ")...\n";
+  spdlog::debug("unsubscribing from {} (id={})", stream, id);
   co_await send_json(json);
 
   const auto executor = co_await asio::this_coro::executor;
@@ -123,9 +123,9 @@ asio::awaitable<void> WebSocketStreams::unsubscribe(const std::string& stream) {
 
   if (nlohmann::json response = fut.get();
       !response.contains("result") || !response["result"].is_null()) {
-    std::cerr << "Unsubscription failed for stream: " << stream << "\n";
+    spdlog::error("unsubscription failed for stream: {}", stream);
   }
-  std::cout << "Unsubscribed from " << stream << " (" << id << ")...\n";
+  spdlog::debug("unsubscribed from {} (id={})", stream, id);
   co_return;
 }
 
@@ -151,7 +151,7 @@ WebSocketStreams::list_subscriptions() {
 
   const std::string json =
       R"({"method": "LIST_SUBSCRIPTIONS", "id": )" + std::to_string(id) + "}";
-  std::cout << "Listing subscriptions (" << id << ")...\n";
+  spdlog::debug("listing subscriptions (id={})", id);
   co_await send_json(json);
 
   // Since std::future doesn't support co_await, poll the future.
@@ -163,7 +163,7 @@ WebSocketStreams::list_subscriptions() {
   nlohmann::json response = fut.get();
 
   if (!response.contains("result")) {
-    std::cerr << "Response does not contain 'result' field.\n";
+    spdlog::error("response does not contain 'result' field");
     co_return std::vector<std::string>{};
   }
 
@@ -190,7 +190,7 @@ void WebSocketStreams::process_message(const std::string& message) {
         it->second->handle(data);
         return;
       }
-      std::cerr << "No handler registered for stream: " << streamName << "\n";
+      spdlog::error("no handler registered for stream: {}", streamName);
     }
 
     // Then process request events if present.
@@ -209,8 +209,8 @@ void WebSocketStreams::process_message(const std::string& message) {
       }
     }
 
-    std::cout << "Unknown WS Streams message: " << j << "\n";
+    spdlog::debug("unknown WS Streams message: {}", j.dump());
   } catch (const std::exception& ex) {
-    std::cerr << "Error parsing message: " << ex.what() << "\n";
+    spdlog::error("error parsing message: {}", ex.what());
   }
 }

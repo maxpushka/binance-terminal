@@ -1,18 +1,19 @@
 module;
-#include <openssl/ssl.h>
-
-#include <boost/asio.hpp>
-#include <boost/asio/awaitable.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/beast/core/buffers_to_string.hpp>
-#include <boost/beast/core/flat_buffer.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket/ssl.hpp>
-#include <boost/beast/websocket/stream.hpp>
-#include <boost/utility/string_view_fwd.hpp>
 #include <iostream>
-#include <nlohmann/json.hpp>
 #include <shared_mutex>
+
+#include "boost/asio.hpp"
+#include "boost/asio/awaitable.hpp"
+#include "boost/asio/ssl.hpp"
+#include "boost/beast/core/buffers_to_string.hpp"
+#include "boost/beast/core/flat_buffer.hpp"
+#include "boost/beast/ssl.hpp"
+#include "boost/beast/websocket/ssl.hpp"
+#include "boost/beast/websocket/stream.hpp"
+#include "boost/utility/string_view_fwd.hpp"
+#include "nlohmann/json.hpp"
+#include "openssl/ssl.h"
+#include "spdlog/spdlog.h"
 
 module exchange;
 
@@ -70,18 +71,18 @@ asio::awaitable<void> WebSocket::establish_connection() {
           // Construct a ping_data object from the payload.
           const boost::beast::websocket::ping_data pd{std::string(payload)};
           ws_.pong(pd);
-          std::cout << "Ping received, pong sent.\n";
+          spdlog::info("ping received, pong sent");
         } catch (const std::exception& e) {
-          std::cerr << "Error sending pong: " << e.what() << "\n";
+          spdlog::error("Error sending pong: {}", e.what());
         }
       }
     });
 
     // Mark connection as established.
     connected_ = true;
-    std::cout << "Connection established!\n";
+    spdlog::info("connection established");
   } catch (std::exception& e) {
-    std::cerr << "Exception in establish_connection: " << e.what() << "\n";
+    spdlog::error("exception in establish_connection: {}", e.what());
   }
   co_return;
 }
