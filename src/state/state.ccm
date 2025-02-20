@@ -8,32 +8,36 @@ export module state;
 
 import exchange;
 
+namespace state {
+namespace subjects = rpp::subjects;
+
 export struct Trade {
   double price;
   double quantity;
   uint64_t timestamp;
 };
 
-template <class Event>
-struct IState : IStreamHandler {
+template <typename Event>
+struct IState : exchange::IStreamHandler {
   ~IState() override = default;
   // get_subject returns the subject that emits Trade objects.
   // It's used by the UI to subscribe for updates.
-  [[nodiscard]] virtual rpp::subjects::publish_subject<Event>&
-  get_subject() const noexcept = 0;
+  [[nodiscard]] virtual subjects::publish_subject<Event>& get_subject()
+      const noexcept = 0;
 };
 
 export class TradeHandler final : public IState<Trade> {
-public:
-  [[nodiscard]] std::string stream_name() const noexcept override;
+ public:
+  std::string stream_name() const noexcept override { return "aggTrade"; }
+
   void handle(const nlohmann::json& data) const override;
 
-  [[nodiscard]] rpp::subjects::publish_subject<Trade>&
-  get_subject() const noexcept override { return subject_; }
+  subjects::publish_subject<Trade>& get_subject() const noexcept override {
+    return subject_;
+  }
 
-private:
-  // Each instance owns its subject.
-  mutable rpp::subjects::publish_subject<Trade> subject_;
+ private:
+  mutable subjects::publish_subject<Trade> subject_;
 };
 
 export struct OrderBookUpdate {
@@ -45,14 +49,17 @@ export struct OrderBookUpdate {
 };
 
 export class OrderBookHandler final : public IState<OrderBookUpdate> {
-public:
-  [[nodiscard]] std::string stream_name() const noexcept override;
+ public:
+  std::string stream_name() const noexcept override { return "depth@100ms"; }
+
   void handle(const nlohmann::json& data) const override;
 
-  [[nodiscard]] rpp::subjects::publish_subject<OrderBookUpdate>&
-  get_subject() const noexcept override { return subject_; }
+  subjects::publish_subject<OrderBookUpdate>& get_subject()
+      const noexcept override {
+    return subject_;
+  }
 
-private:
-  // Each instance owns its subject.
-  mutable rpp::subjects::publish_subject<OrderBookUpdate> subject_;
+ private:
+  mutable subjects::publish_subject<OrderBookUpdate> subject_;
 };
+}  // namespace state

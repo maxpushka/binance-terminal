@@ -6,6 +6,7 @@ module state;
 
 import exchange;
 
+namespace state {
 inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   // {
   //   "e": "depthUpdate", // Event type
@@ -33,10 +34,6 @@ inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   j.at("a").get_to(obu.asks);
 }
 
-[[nodiscard]] std::string OrderBookHandler::stream_name() const noexcept {
-  return "depth@100ms";
-}
-
 void OrderBookHandler::handle(const nlohmann::json& data) const {
   OrderBookUpdate update{};
   try {
@@ -50,3 +47,4 @@ void OrderBookHandler::handle(const nlohmann::json& data) const {
                 update.first_update_id, update.last_update_id,
                 update.bids.size(), update.asks.size());
 }
+}  // namespace state

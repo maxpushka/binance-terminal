@@ -10,7 +10,8 @@ module;
 
 module exchange;
 
-using namespace boost::asio;
+namespace exchange {
+namespace asio = boost::asio;
 
 WebSocketStreams::WebSocketStreams(asio::io_context& ioc)
     : WebSocket(ioc, "stream.binance.com", "9443", "/stream") {}
@@ -54,8 +55,8 @@ asio::awaitable<void> WebSocketStreams::subscribe(
   // Poll until the future is ready.
   while (fut.wait_for(std::chrono::milliseconds(0)) !=
          std::future_status::ready) {
-    steady_timer timer(executor, std::chrono::milliseconds(10));
-    co_await timer.async_wait(use_awaitable);
+    asio::steady_timer timer(executor, std::chrono::milliseconds(10));
+    co_await timer.async_wait(asio::use_awaitable);
   }
 
   {
@@ -111,8 +112,8 @@ asio::awaitable<void> WebSocketStreams::unsubscribe(const std::string& stream) {
   // Poll until the future is ready.
   while (fut.wait_for(std::chrono::milliseconds(0)) !=
          std::future_status::ready) {
-    steady_timer timer(executor, std::chrono::milliseconds(10));
-    co_await timer.async_wait(use_awaitable);
+    asio::steady_timer timer(executor, std::chrono::milliseconds(10));
+    co_await timer.async_wait(asio::use_awaitable);
   }
 
   {
@@ -157,8 +158,8 @@ WebSocketStreams::list_subscriptions() {
   // Since std::future doesn't support co_await, poll the future.
   while (fut.wait_for(std::chrono::milliseconds(0)) !=
          std::future_status::ready) {
-    steady_timer timer(executor, std::chrono::milliseconds(10));
-    co_await timer.async_wait(use_awaitable);
+    asio::steady_timer timer(executor, std::chrono::milliseconds(10));
+    co_await timer.async_wait(asio::use_awaitable);
   }
   nlohmann::json response = fut.get();
 
@@ -214,3 +215,4 @@ void WebSocketStreams::process_message(const std::string& message) {
     spdlog::error("error parsing message: {}", ex.what());
   }
 }
+}  // namespace exchange

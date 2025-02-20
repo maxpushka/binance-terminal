@@ -17,8 +17,9 @@ module;
 
 module exchange;
 
-using namespace boost::asio;
-using namespace boost::beast;
+namespace exchange {
+namespace asio = boost::asio;
+namespace beast = boost::beast;
 
 WebSocket::WebSocket(asio::io_context& ioc, const std::string& host,
                      const std::string& port, const std::string& target)
@@ -32,36 +33,36 @@ WebSocket::WebSocket(asio::io_context& ioc, const std::string& host,
 }
 
 asio::awaitable<void> WebSocket::wait_for_connection() const {
-  const auto executor = co_await this_coro::executor;
+  const auto executor = co_await asio::this_coro::executor;
   while (!connected_) {
     // Wait briefly before checking again.
-    steady_timer timer(executor, std::chrono::milliseconds(50));
-    co_await timer.async_wait(use_awaitable);
+    asio::steady_timer timer(executor, std::chrono::milliseconds(50));
+    co_await timer.async_wait(asio::use_awaitable);
   }
   co_return;
 }
 
 asio::awaitable<void> WebSocket::establish_connection() {
   try {
-    auto executor = co_await this_coro::executor;
+    auto executor = co_await asio::this_coro::executor;
 
     // Resolve the hostname.
     auto endpoints =
-        co_await resolver_.async_resolve(host_, port_, use_awaitable);
+        co_await resolver_.async_resolve(host_, port_, asio::use_awaitable);
 
     // Connect to one of the resolved endpoints.
     co_await async_connect(ws_.next_layer().next_layer(), endpoints,
-                           use_awaitable);
+                           asio::use_awaitable);
 
     // Perform the SSL handshake.
     co_await ws_.next_layer().async_handshake(asio::ssl::stream_base::client,
-                                              use_awaitable);
+                                              asio::use_awaitable);
 
     // Set SNI hostname.
     SSL_set_tlsext_host_name(ws_.next_layer().native_handle(), host_.c_str());
 
     // Perform the WebSocket handshake.
-    co_await ws_.async_handshake(host_, target_, use_awaitable);
+    co_await ws_.async_handshake(host_, target_, asio::use_awaitable);
 
     // Set up a control callback to handle ping frames.
     ws_.control_callback([this](const boost::beast::websocket::frame_type kind,
@@ -90,14 +91,15 @@ asio::awaitable<void> WebSocket::establish_connection() {
 asio::awaitable<void> WebSocket::run() {
   co_await establish_connection();
   while (true) {
-    flat_buffer buffer;
+    beast::flat_buffer buffer;
     co_await ws_.async_read(buffer, asio::use_awaitable);
-    std::string message = buffers_to_string(buffer.data());
+    std::string message = beast::buffers_to_string(buffer.data());
     process_message(message);
   }
 }
 
 asio::awaitable<void> WebSocket::send_json(const std::string& message) {
-  co_await ws_.async_write(boost::asio::buffer(message), use_awaitable);
+  co_await ws_.async_write(boost::asio::buffer(message), asio::use_awaitable);
   co_return;
 }
+}  // namespace exchange

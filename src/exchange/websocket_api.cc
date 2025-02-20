@@ -10,6 +10,7 @@ module;
 
 module exchange;
 
+namespace exchange {
 void from_json(const nlohmann::json& j, OrderBookSnapshot& obs) {
   j.at("lastUpdateId").get_to(obs.last_update_id);
   obs.bids = j.at("bids").get<decltype(OrderBookSnapshot::bids)>();
@@ -106,3 +107,4 @@ void WebsocketAPI::process_message(const std::string& message) {
     spdlog::error("error parsing message: {}", ex.what());
   }
 }
+}  // namespace exchange

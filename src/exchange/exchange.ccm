@@ -16,6 +16,7 @@ namespace asio = boost::asio;
 namespace beast = boost::beast;
 namespace websocket = beast::websocket;
 
+namespace exchange {
 class WebSocket {
  public:
   WebSocket(asio::io_context& ioc, const std::string& host,
@@ -120,3 +121,4 @@ export class WebSocketStreams final : public WebSocket {
       request_handlers_;
   mutable std::shared_mutex request_handlers_mutex_;
 };
+}  // namespace exchange

@@ -20,13 +20,16 @@ int main() {
   boost::asio::io_context io_context;
 
   // Instantiate your Binance WebSocket client.
-  WebSocketStreams ws(io_context);
+  exchange::WebSocketStreams ws(io_context);
   // Start the websocket run coroutine.
   boost::asio::co_spawn(io_context, ws.run(), boost::asio::detached);
 
   // Subscribe to the trade stream for "btcusdt".
-  auto trade_handler = std::make_unique<TradeHandler>();
-  const auto& trade_subject = trade_handler->get_subject(); // WARN: moving this line below the co_spawn will cause invalid reference error.
+  auto trade_handler = std::make_unique<state::TradeHandler>();
+  const auto& trade_subject =
+      trade_handler
+          ->get_subject();  // WARN: moving this line below the co_spawn will
+                            // cause invalid reference error.
   boost::asio::co_spawn(
       io_context,
       [&ws, &trade_handler] -> boost::asio::awaitable<void> {
@@ -38,12 +41,12 @@ int main() {
   // Set up FTXUI.
   auto screen = ScreenInteractive::TerminalOutput();
   std::mutex trade_mutex;
-  Trade latest_trade{};
+  state::Trade latest_trade{};
 
   // Subscribe to Trade events via the ReactivePlusPlus subject.
   const auto trade_observable = trade_subject.get_observable();
   trade_observable.subscribe(
-      [&](const Trade& t) {
+      [&](const state::Trade& t) {
         {
           std::lock_guard lock(trade_mutex);
           latest_trade = t;
@@ -77,7 +80,7 @@ int main() {
   const auto main_component = CatchEvent(ui_renderer, [&](const Event& event) {
     if (event == Event::Custom) return true;
     if (event == Event::Escape) {
-      screen.Exit(); // gracefully exit the event loop.
+      screen.Exit();  // gracefully exit the event loop.
       io_context.stop();
       return true;
     }
@@ -85,7 +88,7 @@ int main() {
   });
 
   std::thread io_thread([&io_context] { io_context.run(); });
-  screen.Loop(main_component); // run the UI loop in the main thread.
+  screen.Loop(main_component);  // run the UI loop in the main thread.
   io_thread.join();
 
   return EXIT_SUCCESS;
