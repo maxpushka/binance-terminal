@@ -20,5 +20,5 @@ void TradeHandler::handle(const nlohmann::json& data) const {
     spdlog::error("JSON parse error: {} (`{}`)", e.what(), data.dump());
     return;
   }
-  get_trade_subject().get_observer().on_next(trade);
+  subject_.get_observer().on_next(trade);
 }

@@ -14,15 +14,26 @@ export struct Trade {
   uint64_t timestamp;
 };
 
-// Use ReactivePlusPlus's publish_subject as our global event bus.
-export inline rpp::subjects::publish_subject<Trade>& get_trade_subject() {
-  static rpp::subjects::publish_subject<Trade> subject;
-  return subject;
-}
+template <class Event>
+struct IState : IStreamHandler {
+  ~IState() override = default;
+  // get_subject returns the subject that emits Trade objects.
+  // It's used by the UI to subscribe for updates.
+  [[nodiscard]] virtual rpp::subjects::publish_subject<Event>&
+  get_subject() const noexcept = 0;
+};
 
-export struct TradeHandler final : IStreamHandler {
+export class TradeHandler final : public IState<Trade> {
+public:
   [[nodiscard]] std::string stream_name() const noexcept override;
   void handle(const nlohmann::json& data) const override;
+
+  [[nodiscard]] rpp::subjects::publish_subject<Trade>&
+  get_subject() const noexcept override { return subject_; }
+
+private:
+  // Each instance owns its subject.
+  mutable rpp::subjects::publish_subject<Trade> subject_;
 };
 
 export struct OrderBookUpdate {
@@ -33,7 +44,15 @@ export struct OrderBookUpdate {
   uint64_t timestamp;
 };
 
-export struct OrderBookHandler final : IStreamHandler {
+export class OrderBookHandler final : public IState<OrderBookUpdate> {
+public:
   [[nodiscard]] std::string stream_name() const noexcept override;
   void handle(const nlohmann::json& data) const override;
+
+  [[nodiscard]] rpp::subjects::publish_subject<OrderBookUpdate>&
+  get_subject() const noexcept override { return subject_; }
+
+private:
+  // Each instance owns its subject.
+  mutable rpp::subjects::publish_subject<OrderBookUpdate> subject_;
 };

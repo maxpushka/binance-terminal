@@ -6,7 +6,7 @@ module state;
 
 import exchange;
 
-void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
+inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   // {
   //   "e": "depthUpdate", // Event type
   //   "E": 1672515782136, // Event time
