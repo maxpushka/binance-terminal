@@ -89,15 +89,52 @@ target_sources(state
         src/state/order_book.cc
 )
 target_link_libraries(state PUBLIC
-        spdlog::spdlog
-        exchange
         rpp
+        nlohmann_json::nlohmann_json
+        spdlog::spdlog
 )
+
+add_library(ui.component STATIC)
+target_sources(ui.component
+        PUBLIC FILE_SET cxx_modules
+        TYPE CXX_MODULES
+        FILES
+        src/ui/component/component.ccm
+        PRIVATE
+        src/ui/component/scroller.cc
+        src/ui/component/table.cc
+)
+target_link_libraries(ui.component PUBLIC rpp ftxui::component)
+
+add_library(ui.widget STATIC)
+target_sources(ui.widget
+        PUBLIC FILE_SET cxx_modules
+        TYPE CXX_MODULES
+        FILES
+        src/ui/widget/widget.ccm
+        PRIVATE
+        src/ui/widget/market_trades.cc
+)
+target_link_libraries(ui.widget PUBLIC state ui.component)
+
+add_library(ui STATIC)
+target_sources(ui
+        PUBLIC FILE_SET cxx_modules
+        TYPE CXX_MODULES
+        FILES
+        src/ui/ui.ccm
+        PRIVATE
+)
+target_link_libraries(ui PUBLIC ui.widget)
 
 # ------------------- Main Binary -------------------
 add_executable(${PROJECT_NAME} src/main.cc)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
-target_link_libraries(${PROJECT_NAME} PRIVATE exchange state ftxui::component)
+target_link_libraries(${PROJECT_NAME} PRIVATE exchange state ui)
+
+# ------------------- Interactive UI examples -------------------
+# TODO: build examples/
+# TODO: add flag build examples
 
 # ------------------- Tests -------------------
 # enable_testing()

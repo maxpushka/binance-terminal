@@ -1,0 +1,91 @@
+module;
+#include <ftxui/dom/table.hpp>
+#include <vector>
+
+#include "ftxui/component/component.hpp"
+#include "ftxui/component/component_base.hpp"
+#include "rpp/subjects/publish_subject.hpp"
+
+export module ui.component;
+
+namespace component {
+// Signal type used for triggering redraws.
+export struct RedrawSignal {};
+
+export class TableHeader : public ftxui::ComponentBase {
+ public:
+  using HeaderType = std::vector<std::string>;
+
+  TableHeader(const rpp::subjects::publish_subject<HeaderType>& header_input,
+              rpp::subjects::publish_subject<RedrawSignal>& output);
+
+  void setColumnWidths(const std::vector<size_t>& new_widths);
+
+  [[nodiscard]] const HeaderType& getHeaderRow() const { return header_row_; }
+
+  virtual ftxui::Element RenderCell(const std::string& cell, size_t width,
+                                    size_t /*index*/);
+
+  ftxui::Element Render() override;
+
+ protected:
+  HeaderType header_row_;
+  std::vector<size_t> col_widths_ = {10, 10, 10};
+  rpp::subjects::publish_subject<RedrawSignal>& header_update_subject_;
+};
+
+class ITableBody : public ftxui::ComponentBase {
+ public:
+  [[nodiscard]] virtual std::vector<std::vector<std::string>> getRows()
+      const = 0;
+  virtual void setColumnWidths(const std::vector<size_t>& new_widths) = 0;
+};
+
+export template <typename T>
+class TableBody : public ITableBody {
+ public:
+  using RowType = std::vector<std::string>;
+
+  TableBody(const rpp::subjects::publish_subject<T>& event_input,
+            rpp::subjects::publish_subject<RedrawSignal>& output);
+
+  virtual void ProcessEvent(const T& event);
+
+  virtual RowType BuildRow(const T& event) const = 0;
+
+  virtual ftxui::Element RenderCell(const std::string& cell, size_t width,
+                                    size_t col_index, const T& event) const;
+
+  std::vector<std::vector<std::string>> getRows() const override;
+
+  void setColumnWidths(const std::vector<size_t>& new_widths) override;
+
+  ftxui::Element Render() override;
+
+ protected:
+  mutable std::mutex mutex_;
+  std::vector<T> events_;
+  std::vector<size_t> col_widths_ = {10, 10, 10};
+  rpp::subjects::publish_subject<RedrawSignal>& update_subject_;
+};
+
+ftxui::Component Scroller(ftxui::Component child);
+
+export class ScrollableTable final : public ftxui::ComponentBase {
+ public:
+  ScrollableTable(std::shared_ptr<TableHeader> header,
+                  std::shared_ptr<ITableBody> body,
+                  rpp::subjects::publish_subject<RedrawSignal>& redraw_subject);
+
+  ftxui::Element Render() override;
+
+ private:
+  void recalcColumnWidths() const;
+
+  std::shared_ptr<TableHeader> header_component_;
+  std::shared_ptr<ITableBody> body_component_;
+  rpp::subjects::publish_subject<RedrawSignal>& redraw_subject_;
+  ftxui::Component body_renderer_;
+  ftxui::Component body_scroller_;
+};
+}  // namespace component

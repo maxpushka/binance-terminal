@@ -6,9 +6,28 @@ module state;
 
 namespace state {
 inline void from_json(const nlohmann::json& j, Trade& t) {
+  // {
+  //   "e": "aggTrade",    // Event type
+  //   "E": 1672515782136, // Event time
+  //   "s": "BNBBTC",      // Symbol
+  //   "a": 12345,         // Aggregate trade ID
+  //   "p": "0.001",       // Price
+  //   "q": "100",         // Quantity
+  //   "f": 100,           // First trade ID
+  //   "l": 105,           // Last trade ID
+  //   "T": 1672515782136, // Trade time
+  //   "m": true,          // Is the buyer the market maker?
+  //   "M": true           // Ignore
+  // }
+  j.at("E").get_to(t.event_time);
+  j.at("s").get_to(t.symbol);
+  j.at("a").get_to(t.trade_id);
   t.price = std::stod(j.at("p").get<std::string>());
   t.quantity = std::stod(j.at("q").get<std::string>());
-  j.at("T").get_to(t.timestamp);
+  j.at("f").get_to(t.first_trade_id);
+  j.at("l").get_to(t.last_trade_id);
+  j.at("T").get_to(t.trade_time);
+  j.at("m").get_to(t.is_buyer_market_maker);
 }
 
 void TradeHandler::handle(const nlohmann::json& data) const {

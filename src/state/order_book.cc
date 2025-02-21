@@ -4,8 +4,6 @@ module;
 
 module state;
 
-import exchange;
-
 namespace state {
 inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   // {

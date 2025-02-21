@@ -1,0 +1,8 @@
+export module ui;
+
+import ui.component;
+import ui.widget;
+
+namespace ui {
+export class SpotTrading {};
+}  // namespace ui

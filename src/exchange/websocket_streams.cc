@@ -7,6 +7,7 @@ module;
 #include "boost/asio/use_awaitable.hpp"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
+#include "websocket_streams_handler.h"
 
 module exchange;
 

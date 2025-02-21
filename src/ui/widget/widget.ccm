@@ -1,0 +1,17 @@
+module;
+#include "ftxui/component/component.hpp"
+#include "rpp/subjects/publish_subject.hpp"
+
+export module ui.widget;
+
+import ui.component;
+import state;
+
+namespace widget {
+using namespace rpp::subjects;
+
+export ftxui::Component MarketTrades(
+    const publish_subject<state::Trade>& trade_input,
+    const publish_subject<std::vector<std::string>>& header_input,
+    const publish_subject<component::RedrawSignal>& output);
+}  // namespace widget
