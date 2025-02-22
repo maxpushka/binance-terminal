@@ -48,67 +48,6 @@ Element TableHeader::Render() {
   return header_table.Render() | bgcolor(Color::Black);
 }
 
-template <typename T>
-TableBody<T>::TableBody(const rpp::subjects::publish_subject<T>& event_input,
-                        rpp::subjects::publish_subject<RedrawSignal>& output)
-    : update_subject_(output) {
-  event_input.get_observable().subscribe([this](const T& event) {
-    ProcessEvent(event);
-    update_subject_.get_observer().on_next(RedrawSignal{});
-  });
-}
-
-template <typename T>
-void TableBody<T>::ProcessEvent(const T& event) {
-  std::lock_guard lock(mutex_);
-  events_.push_back(event);
-  // Keep only the latest 25 events.
-  while (events_.size() > 25) events_.erase(events_.begin());
-}
-
-template <typename T>
-Element TableBody<T>::RenderCell(const std::string& cell, const size_t width,
-                                 const size_t col_index, const T& event) const {
-  return text(cell) | size(WIDTH, EQUAL, static_cast<int>(width)) |
-         color(Color::White);
-}
-
-template <typename T>
-std::vector<std::vector<std::string>> TableBody<T>::getRows() const {
-  std::lock_guard lock(mutex_);
-  std::vector<std::vector<std::string>> rows;
-  rows.reserve(events_.size());
-  for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
-    rows.push_back(BuildRow(*it));
-  }
-  return rows;
-}
-
-template <typename T>
-void TableBody<T>::setColumnWidths(const std::vector<size_t>& new_widths) {
-  if (new_widths == col_widths_) return;  // to avoid infinite cycle of redraws
-  col_widths_ = new_widths;
-  update_subject_.get_observer().on_next(RedrawSignal{});
-}
-
-template <typename T>
-Element TableBody<T>::Render() {
-  std::vector<std::vector<Element>> rows_elements;
-  std::lock_guard lock(mutex_);
-  for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
-    const T& event = *it;
-    RowType row = BuildRow(event);
-    std::vector<Element> cells;
-    for (size_t i = 0; i < row.size(); ++i) {
-      size_t width = i < col_widths_.size() ? col_widths_[i] : 10;
-      cells.push_back(RenderCell(row[i], width, i, event));
-    }
-    rows_elements.push_back(cells);
-  }
-  Table body_table(rows_elements);
-  return body_table.Render() | bgcolor(Color::Black);
-}
-
 ScrollableTable::ScrollableTable(
     std::shared_ptr<TableHeader> header, std::shared_ptr<ITableBody> body,
     rpp::subjects::publish_subject<RedrawSignal>& redraw_subject)

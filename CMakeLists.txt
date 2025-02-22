@@ -115,7 +115,7 @@ target_sources(ui.widget
         PRIVATE
         src/ui/widget/market_trades.cc
 )
-target_link_libraries(ui.widget PUBLIC state ui.component)
+target_link_libraries(ui.widget PUBLIC ui.component state)
 
 add_library(ui STATIC)
 target_sources(ui
@@ -131,10 +131,6 @@ target_link_libraries(ui PUBLIC ui.widget)
 add_executable(${PROJECT_NAME} src/main.cc)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE exchange state ui)
-
-# ------------------- Interactive UI examples -------------------
-# TODO: build examples/
-# TODO: add flag build examples
 
 # ------------------- Tests -------------------
 # enable_testing()

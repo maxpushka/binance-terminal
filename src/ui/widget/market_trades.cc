@@ -1,5 +1,4 @@
 module;
-
 #include <format>
 
 #include "ftxui/component/component.hpp"
@@ -9,6 +8,10 @@ module ui.widget;
 
 import state;
 import ui.component;
+
+namespace component {
+template class TableBody<state::Trade>;
+}
 
 namespace widget {
 class MarketTradesBody final : public component::TableBody<state::Trade> {
@@ -26,7 +29,7 @@ class MarketTradesBody final : public component::TableBody<state::Trade> {
   }
 
   [[nodiscard]] ftxui::Element RenderCell(
-      const std::string& cell, const size_t width, const size_t col_index,
+      const std::string& cell, size_t width, size_t col_index,
       const state::Trade& trade) const override {
     using namespace ftxui;
     if (col_index == 0) {
@@ -41,16 +44,15 @@ class MarketTradesBody final : public component::TableBody<state::Trade> {
 };
 
 ftxui::Component MarketTrades(
-    const publish_subject<state::Trade>& trade_subject,
-    const publish_subject<std::vector<std::string>>& header_subject,
-    publish_subject<component::RedrawSignal>& redraw_subject) {
+    const publish_subject<state::Trade>& trade_input,
+    const publish_subject<std::vector<std::string>>& header_input,
+    publish_subject<component::RedrawSignal>& output) {
   // Instantiate header and body components first.
   auto header_component =
-      std::make_shared<component::TableHeader>(header_subject, redraw_subject);
-  auto body_component =
-      std::make_shared<MarketTradesBody>(trade_subject, redraw_subject);
+      std::make_shared<component::TableHeader>(header_input, output);
+  auto body_component = std::make_shared<MarketTradesBody>(trade_input, output);
   // Create the composite scrollable table.
-  return std::make_shared<component::ScrollableTable>(
-      header_component, body_component, redraw_subject);
+  return std::make_shared<component::ScrollableTable>(header_component,
+                                                      body_component, output);
 }
 }  // namespace widget

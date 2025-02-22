@@ -13,5 +13,5 @@ using namespace rpp::subjects;
 export ftxui::Component MarketTrades(
     const publish_subject<state::Trade>& trade_input,
     const publish_subject<std::vector<std::string>>& header_input,
-    const publish_subject<component::RedrawSignal>& output);
+    publish_subject<component::RedrawSignal>& output);
 }  // namespace widget

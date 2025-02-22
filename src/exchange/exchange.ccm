@@ -25,7 +25,6 @@ class WebSocket {
   virtual ~WebSocket() = default;
 
   // Coroutine-based entry point.
-  // TODO: run this method in ctor
   asio::awaitable<void> run();
 
  protected:

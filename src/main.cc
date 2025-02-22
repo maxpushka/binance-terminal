@@ -8,7 +8,6 @@
 #include "boost/asio/io_context.hpp"
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
-#include "ftxui/dom/elements.hpp"
 #include "rpp/subjects/publish_subject.hpp"
 
 import exchange;
@@ -27,7 +26,7 @@ int main() {
   // Start the websocket run coroutine.
   boost::asio::co_spawn(io_context, ws.run(), boost::asio::detached);
 
-  // Subscribe to the trade stream for "btcusdt".
+  // Stream market data.
   auto trade_handler = std::make_unique<state::TradeHandler>();
   const auto& trade_subject =
       trade_handler
@@ -41,33 +40,38 @@ int main() {
       },
       boost::asio::detached);
 
-  // Set up FTXUI.
-  auto screen = ScreenInteractive::TerminalOutput();
-
-  // Set up event routing
+  // Set up UI components.
   const rpp::subjects::publish_subject<std::vector<std::string>> header_subject;
-  header_subject.get_observer().on_next(
-      {"Price (USDT)", "Amount (BTC)", "Time"});
-  const rpp::subjects::publish_subject<component::RedrawSignal> redraw_subject;
-  redraw_subject.get_observable().subscribe(
-      [&screen](component::RedrawSignal) { screen.PostEvent(Event::Custom); });
-
-  // Wrap widgets in a CatchEvent to allow exit on ESC.
+  rpp::subjects::publish_subject<component::RedrawSignal> redraw_subject;
   const auto market_trades =
       widget::MarketTrades(trade_subject, header_subject, redraw_subject);
-  const auto main_component =
-      CatchEvent(market_trades, [&screen](const Event& event) {
+
+  // Set up event handlers.
+  auto screen = ScreenInteractive::TerminalOutput();
+  header_subject.get_observer().on_next(
+      {"Price (USDT)", "Amount (BTC)", "Time"});
+  redraw_subject.get_observable().subscribe(
+      [&screen](component::RedrawSignal) { screen.PostEvent(Event::Custom); });
+  const auto shutdown_handler = [&screen, &io_context] {
+    screen.Exit();
+    io_context.stop();
+  };
+  const auto ui_handler =
+      CatchEvent(market_trades, [&shutdown_handler](const Event& event) {
         if (event == Event::Custom) return true;
         if (event == Event::Escape) {
-          screen.Exit();
+          shutdown_handler();
           return true;
         }
         return false;
       });
 
+  // Run IO & UI loops.
   std::thread io_thread([&io_context] { io_context.run(); });
-  screen.Loop(main_component);  // run the UI loop in the main thread.
-  io_thread.join();
+  screen.Loop(ui_handler);  // run the UI loop in the main thread.
 
+  // Clean up.
+  shutdown_handler();  // in case user hits Ctrl+C instead of ESC.
+  io_thread.join();
   return EXIT_SUCCESS;
 }
