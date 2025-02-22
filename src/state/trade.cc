@@ -19,14 +19,15 @@ inline void from_json(const nlohmann::json& j, Trade& t) {
   //   "m": true,          // Is the buyer the market maker?
   //   "M": true           // Ignore
   // }
-  j.at("E").get_to(t.event_time);
+  using namespace std::chrono;
+  t.event_time = sys_time{milliseconds{j.at("E").get<uint64_t>()}};
   j.at("s").get_to(t.symbol);
   j.at("a").get_to(t.trade_id);
   t.price = std::stod(j.at("p").get<std::string>());
   t.quantity = std::stod(j.at("q").get<std::string>());
   j.at("f").get_to(t.first_trade_id);
   j.at("l").get_to(t.last_trade_id);
-  j.at("T").get_to(t.trade_time);
+  t.trade_time = sys_time{milliseconds{j.at("T").get<uint64_t>()}};
   j.at("m").get_to(t.is_buyer_market_maker);
 }
 

@@ -24,14 +24,14 @@ export struct Trade {
   //   "m": true,          // Is the buyer the market maker?
   //   "M": true           // Ignore
   // }
-  uint64_t event_time;
+  std::chrono::system_clock::time_point event_time;
   std::string symbol;
   uint64_t trade_id;
   double price;
   double quantity;
   uint64_t first_trade_id;
   uint64_t last_trade_id;
-  uint64_t trade_time;
+  std::chrono::system_clock::time_point trade_time;
   bool is_buyer_market_maker;
 };
 

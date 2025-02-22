@@ -1,4 +1,5 @@
 module;
+#include <chrono>
 #include <format>
 
 #include "ftxui/component/component.hpp"
@@ -9,10 +10,6 @@ module ui.widget;
 import state;
 import ui.component;
 
-namespace component {
-template class TableBody<state::Trade>;
-}
-
 namespace widget {
 class MarketTradesBody final : public component::TableBody<state::Trade> {
  public:
@@ -20,16 +17,31 @@ class MarketTradesBody final : public component::TableBody<state::Trade> {
                    publish_subject<component::RedrawSignal>& output)
       : TableBody(trade_input, output) {}
 
+  void ProcessEvent(const state::Trade& event) override {
+    std::lock_guard lock(mutex_);
+    events_.push_back(event);
+
+    // Remove all events that are older than 1.5 minutes.
+    constexpr auto duration =
+        std::chrono::minutes(1) + std::chrono::seconds(30);
+    const auto cutoff_ms = event.event_time - duration;
+    std::erase_if(events_, [cutoff_ms](const state::Trade& trade) {
+      return trade.event_time < cutoff_ms;
+    });
+  }
+
   [[nodiscard]] RowType BuildRow(const state::Trade& trade) const override {
+    const auto truncated_event_time =
+        std::chrono::floor<std::chrono::seconds>(trade.event_time);
     return {
         std::format("{:.5f}", trade.price),
         std::format("{:.5f}", trade.quantity),
-        std::to_string(trade.event_time),
+        std::format("{:%T}", truncated_event_time),
     };
   }
 
   [[nodiscard]] ftxui::Element RenderCell(
-      const std::string& cell, size_t width, size_t col_index,
+      const std::string& cell, const size_t width, const size_t col_index,
       const state::Trade& trade) const override {
     using namespace ftxui;
     if (col_index == 0) {
@@ -56,3 +68,7 @@ ftxui::Component MarketTrades(
                                                       body_component, output);
 }
 }  // namespace widget
+
+namespace component {
+template class TableBody<state::Trade>;
+}  // namespace component
