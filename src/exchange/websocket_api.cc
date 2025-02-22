@@ -82,14 +82,15 @@ WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
   co_return snapshot;
 }
 
-void WebsocketAPI::process_message(const std::string& message) {
+asio::awaitable<void> WebsocketAPI::process_message(
+    const std::string& message) {
   try {
     const auto j = nlohmann::json::parse(message);
 
     // Then process request events if present.
     if (!j.contains("id")) {
       spdlog::error("unknown WS API message: {}", j.dump());
-      return;
+      co_return;
     }
 
     const int id = j["id"].get<int>();
@@ -102,7 +103,10 @@ void WebsocketAPI::process_message(const std::string& message) {
       request_handlers_.erase(it);
       lock.unlock();
       handler(j);
+      co_return;
     }
+
+    spdlog::debug("unknown WS API message: {}", j.dump());
   } catch (const std::exception& ex) {
     spdlog::error("error parsing message: {}", ex.what());
   }

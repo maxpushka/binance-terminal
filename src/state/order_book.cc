@@ -1,4 +1,5 @@
 module;
+#include "boost/asio/awaitable.hpp"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 
@@ -25,6 +26,7 @@ inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   //     ]
   //   ]
   // }
+  j.at("s").get_to(obu.symbol);
   j.at("E").get_to(obu.timestamp);
   j.at("U").get_to(obu.first_update_id);
   j.at("u").get_to(obu.last_update_id);
@@ -32,13 +34,14 @@ inline void from_json(const nlohmann::json& j, OrderBookUpdate& obu) {
   j.at("a").get_to(obu.asks);
 }
 
-void OrderBookHandler::handle(const nlohmann::json& data) const {
+boost::asio::awaitable<void> OrderBookHandler::handle(
+    const nlohmann::json& data) const {
   OrderBookUpdate update{};
   try {
     update = data.get<OrderBookUpdate>();
   } catch (const std::exception& e) {
     spdlog::error("JSON parse error: {} (`{}`)", e.what(), data.dump());
-    return;
+    co_return;
   }
 
   spdlog::debug("order book update: {} -> {} (bids: {}, asks: {})",

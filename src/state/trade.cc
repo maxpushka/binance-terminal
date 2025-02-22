@@ -1,4 +1,5 @@
 module;
+#include "boost/asio/awaitable.hpp"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
 
@@ -31,14 +32,17 @@ inline void from_json(const nlohmann::json& j, Trade& t) {
   j.at("m").get_to(t.is_buyer_market_maker);
 }
 
-void TradeHandler::handle(const nlohmann::json& data) const {
+boost::asio::awaitable<void> TradeHandler::handle(
+    const nlohmann::json& data) const {
   Trade trade{};
   try {
     trade = data.get<Trade>();
   } catch (const std::exception& e) {
     spdlog::error("JSON parse error: {} (`{}`)", e.what(), data.dump());
-    return;
+    co_return;
   }
+
   subject_.get_observer().on_next(trade);
+  co_return;
 }
 }  // namespace state

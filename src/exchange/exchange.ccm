@@ -9,7 +9,6 @@ module;
 #include "boost/beast/websocket/ssl.hpp"
 #include "boost/beast/websocket/stream.hpp"
 #include "nlohmann/json.hpp"
-#include "websocket_streams_handler.h"
 
 export module exchange;
 
@@ -35,7 +34,7 @@ class WebSocket {
   asio::awaitable<void> send_json(const std::string& message);
 
   // Process each incoming message.
-  virtual void process_message(const std::string& message) = 0;
+  virtual asio::awaitable<void> process_message(const std::string& message) = 0;
 
  private:
   std::string host_, port_, target_;
@@ -63,7 +62,7 @@ export class WebsocketAPI final : public WebSocket {
       const std::string& market);
 
  protected:
-  void process_message(const std::string& message) override;
+  asio::awaitable<void> process_message(const std::string& message) override;
 
  private:
   std::atomic<int> next_request_id_{1};
@@ -72,6 +71,16 @@ export class WebsocketAPI final : public WebSocket {
   std::unordered_map<int, std::function<void(const nlohmann::json&)>>
       request_handlers_;
   mutable std::shared_mutex request_handlers_mutex_;
+};
+
+/// Interface that all stream handlers must implement.
+export struct IStreamHandler {
+  virtual ~IStreamHandler() = default;
+  /// Get the name of the stream this handler is responsible for.
+  [[nodiscard]] virtual std::string stream_name() const noexcept = 0;
+  /// Handle the data part of a combined stream event.
+  [[nodiscard]] virtual asio::awaitable<void> handle(
+      const nlohmann::json& data) const = 0;
 };
 
 /// Self-sufficient Binance WebSocket client.
@@ -98,7 +107,7 @@ export class WebSocketStreams final : public WebSocket {
 
  protected:
   // Process each incoming message.
-  void process_message(const std::string& message) override;
+  asio::awaitable<void> process_message(const std::string& message) override;
 
  private:
   std::atomic<int> next_request_id_{1};

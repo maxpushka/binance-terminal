@@ -7,7 +7,6 @@ module;
 #include "boost/asio/use_awaitable.hpp"
 #include "nlohmann/json.hpp"
 #include "spdlog/spdlog.h"
-#include "websocket_streams_handler.h"
 
 module exchange;
 
@@ -176,7 +175,8 @@ WebSocketStreams::list_subscriptions() {
 
 /// Process an incoming message by first checking for stream events (hot path)
 /// and then for request events.
-void WebSocketStreams::process_message(const std::string& message) {
+asio::awaitable<void> WebSocketStreams::process_message(
+    const std::string& message) {
   try {
     auto j = nlohmann::json::parse(message);
 
@@ -189,8 +189,8 @@ void WebSocketStreams::process_message(const std::string& message) {
       std::shared_lock lock(stream_handlers_mutex_);
       if (const auto it = stream_handlers_.find(streamName);
           it != stream_handlers_.end()) {
-        it->second->handle(data);
-        return;
+        co_await it->second->handle(data);
+        co_return;
       }
       spdlog::error("no handler registered for stream: {}", streamName);
     }
@@ -207,7 +207,7 @@ void WebSocketStreams::process_message(const std::string& message) {
         request_handlers_.erase(it);
         lock.unlock();
         handler(j);
-        return;
+        co_return;
       }
     }
 

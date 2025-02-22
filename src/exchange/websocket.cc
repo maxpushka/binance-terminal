@@ -94,7 +94,7 @@ asio::awaitable<void> WebSocket::run() {
     beast::flat_buffer buffer;
     co_await ws_.async_read(buffer, asio::use_awaitable);
     std::string message = beast::buffers_to_string(buffer.data());
-    process_message(message);
+    co_await process_message(message);
   }
 }
 

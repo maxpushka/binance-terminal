@@ -89,6 +89,7 @@ target_sources(state
         src/state/order_book.cc
 )
 target_link_libraries(state PUBLIC
+        exchange
         rpp
         nlohmann_json::nlohmann_json
         spdlog::spdlog

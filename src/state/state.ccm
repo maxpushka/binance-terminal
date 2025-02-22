@@ -1,11 +1,13 @@
 module;
 #include <string>
 
-#include "../exchange/websocket_streams_handler.h"
+#include "boost/asio/awaitable.hpp"
 #include "nlohmann/json.hpp"
 #include "rpp/subjects/publish_subject.hpp"
 
 export module state;
+
+import exchange;
 
 namespace state {
 namespace subjects = rpp::subjects;
@@ -48,29 +50,32 @@ export class TradeHandler final : public IState<Trade> {
  public:
   std::string stream_name() const noexcept override { return "aggTrade"; }
 
-  void handle(const nlohmann::json& data) const override;
+  boost::asio::awaitable<void> handle(
+      const nlohmann::json& data) const override;
 
   subjects::publish_subject<Trade>& get_subject() const noexcept override {
     return subject_;
   }
 
  private:
-  mutable subjects::publish_subject<Trade> subject_;
+  mutable subjects::publish_subject<Trade> subject_{};
 };
 
 export struct OrderBookUpdate {
+  std::string symbol;
+  uint64_t timestamp;
   int64_t first_update_id;
   int64_t last_update_id;
   std::vector<std::vector<std::string>> bids;
   std::vector<std::vector<std::string>> asks;
-  uint64_t timestamp;
 };
 
 export class OrderBookHandler final : public IState<OrderBookUpdate> {
  public:
   std::string stream_name() const noexcept override { return "depth@100ms"; }
 
-  void handle(const nlohmann::json& data) const override;
+  boost::asio::awaitable<void> handle(
+      const nlohmann::json& data) const override;
 
   subjects::publish_subject<OrderBookUpdate>& get_subject()
       const noexcept override {
@@ -78,6 +83,6 @@ export class OrderBookHandler final : public IState<OrderBookUpdate> {
   }
 
  private:
-  mutable subjects::publish_subject<OrderBookUpdate> subject_;
+  mutable subjects::publish_subject<OrderBookUpdate> subject_{};
 };
 }  // namespace state
