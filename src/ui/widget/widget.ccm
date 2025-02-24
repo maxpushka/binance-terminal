@@ -14,4 +14,10 @@ export ftxui::Component MarketTrades(
     const publish_subject<state::Trade>& trade_input,
     const publish_subject<std::vector<std::string>>& header_input,
     publish_subject<component::RedrawSignal>& output);
+
+export ftxui::Component OrderBook(
+    const publish_subject<state::OrderBook>& order_book_input,
+    const publish_subject<state::Trade>& quote_to_usdt_trades_input,
+    const publish_subject<std::vector<std::string>>& header_input,
+    publish_subject<component::RedrawSignal>& output);
 }  // namespace widget
