@@ -32,8 +32,7 @@ inline void from_json(const nlohmann::json& j, Trade& t) {
   j.at("m").get_to(t.is_buyer_market_maker);
 }
 
-boost::asio::awaitable<void> TradeHandler::handle(
-    const nlohmann::json& data) const {
+boost::asio::awaitable<void> TradeHandler::handle(const nlohmann::json& data) {
   Trade trade{};
   try {
     trade = data.get<Trade>();

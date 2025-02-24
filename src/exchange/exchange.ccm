@@ -54,9 +54,9 @@ export struct OrderBookSnapshot {
 
 export void from_json(const nlohmann::json& j, OrderBookSnapshot& obs);
 
-export class WebsocketAPI final : public WebSocket {
+export class WebSocketAPI final : public WebSocket {
  public:
-  explicit WebsocketAPI(boost::asio::io_context& io_context);
+  explicit WebSocketAPI(boost::asio::io_context& io_context);
 
   [[nodiscard]] asio::awaitable<OrderBookSnapshot> get_orderbook_snapshot(
       const std::string& market);
@@ -80,7 +80,7 @@ export struct IStreamHandler {
   [[nodiscard]] virtual std::string stream_name() const noexcept = 0;
   /// Handle the data part of a combined stream event.
   [[nodiscard]] virtual asio::awaitable<void> handle(
-      const nlohmann::json& data) const = 0;
+      const nlohmann::json& data) = 0;
 };
 
 /// Self-sufficient Binance WebSocket client.

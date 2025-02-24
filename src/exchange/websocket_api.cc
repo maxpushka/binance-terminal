@@ -17,11 +17,11 @@ void from_json(const nlohmann::json& j, OrderBookSnapshot& obs) {
   obs.asks = j.at("asks").get<decltype(OrderBookSnapshot::asks)>();
 }
 
-WebsocketAPI::WebsocketAPI(boost::asio::io_context& io_context)
+WebSocketAPI::WebSocketAPI(boost::asio::io_context& io_context)
     : WebSocket(io_context, "ws-api.binance.com", "443", "/ws-api/v3") {}
 
 [[nodiscard]] asio::awaitable<OrderBookSnapshot>
-WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
+WebSocketAPI::get_orderbook_snapshot(const std::string& market) {
   // Validate market using a regex.
   if (const std::regex market_regex("^[a-zA-Z0-9-_.]{1,20}$");
       !std::regex_match(market, market_regex)) {
@@ -82,7 +82,7 @@ WebsocketAPI::get_orderbook_snapshot(const std::string& market) {
   co_return snapshot;
 }
 
-asio::awaitable<void> WebsocketAPI::process_message(
+asio::awaitable<void> WebSocketAPI::process_message(
     const std::string& message) {
   try {
     const auto j = nlohmann::json::parse(message);

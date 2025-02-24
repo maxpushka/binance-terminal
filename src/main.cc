@@ -21,21 +21,28 @@ using namespace ftxui;
 int main() {
   boost::asio::io_context io_context;
 
-  // Instantiate your Binance WebSocket client.
+  // Instantiate Binance client.
   exchange::WebSocketStreams ws(io_context);
-  // Start the websocket run coroutine.
+  exchange::WebSocketAPI api(io_context);
+  // Start the IO coroutines.
   boost::asio::co_spawn(io_context, ws.run(), boost::asio::detached);
+    boost::asio::co_spawn(io_context, api.run(), boost::asio::detached);
 
-  // Stream market data.
+  // Set up stream handlers.
   auto trade_handler = std::make_unique<state::TradeHandler>();
-  const auto& trade_subject =
-      trade_handler
-          ->get_subject();  // WARN: moving this line below the co_spawn will
-                            // cause invalid reference error.
+  auto order_book_handler = std::make_unique<state::OrderBookHandler>(api);
+
+  // WARN: moving the following subject fetching lines below the co_spawn will cause invalid reference error.
+  const auto& trade_subject = trade_handler->get_subject();
+  const auto& order_book_subject = order_book_handler->get_subject();
+
+  // Subscribe to the market data stream.
   boost::asio::co_spawn(
       io_context,
-      [&ws, &trade_handler] -> boost::asio::awaitable<void> {
-        co_await ws.subscribe("btcusdt", std::move(trade_handler));
+      [&ws, &trade_handler, &order_book_handler] -> boost::asio::awaitable<void> {
+        constexpr auto market = "btcusdt";
+        co_await ws.subscribe(market, std::move(trade_handler));
+        co_await ws.subscribe(market, std::move(order_book_handler));
         co_return;
       },
       boost::asio::detached);

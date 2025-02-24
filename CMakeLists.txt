@@ -90,8 +90,8 @@ target_sources(state
 )
 target_link_libraries(state PUBLIC
         exchange
-        rpp
         nlohmann_json::nlohmann_json
+        rpp
         spdlog::spdlog
 )
 
@@ -115,6 +115,7 @@ target_sources(ui.widget
         src/ui/widget/widget.ccm
         PRIVATE
         src/ui/widget/market_trades.cc
+        src/ui/widget/order_book.cc
 )
 target_link_libraries(ui.widget PUBLIC ui.component state)
 
