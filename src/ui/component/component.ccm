@@ -41,31 +41,26 @@ class ITableBody : public ftxui::ComponentBase {
   virtual void setColumnWidths(const std::vector<size_t>& new_widths) = 0;
 };
 
-export template <typename T>
+export template <typename Input, typename State>
 class TableBody : public ITableBody {
  public:
   using RowType = std::vector<std::string>;
 
-  TableBody(const rpp::subjects::publish_subject<T>& event_input,
+  TableBody(const rpp::subjects::publish_subject<Input>& event_input,
             rpp::subjects::publish_subject<RedrawSignal>& output)
       : update_subject_(output) {
-    event_input.get_observable().subscribe([this](const T& event) {
+    event_input.get_observable().subscribe([this](const Input& event) {
       ProcessEvent(event);
       update_subject_.get_observer().on_next(RedrawSignal{});
     });
   }
 
-  virtual void ProcessEvent(const T& event) {
-    std::lock_guard lock(mutex_);
-    events_.push_back(event);
-    // Keep only the latest 25 events.
-    while (events_.size() > 25) events_.erase(events_.begin());
-  }
+  virtual void ProcessEvent(const Input& event) = 0;
 
-  virtual RowType BuildRow(const T& event) const = 0;
+  [[nodiscard]] virtual RowType BuildRow(const State& event) const = 0;
 
-  virtual ftxui::Element RenderCell(const std::string& cell, size_t width,
-                                    size_t col_index, const T& event) const {
+  [[nodiscard]] virtual ftxui::Element RenderCell(const std::string& cell, const size_t width,
+                                    const size_t col_index, const State& event) const {
     using namespace ftxui;
     return text(cell) | size(WIDTH, EQUAL, static_cast<int>(width)) |
            color(Color::White);
@@ -92,7 +87,7 @@ class TableBody : public ITableBody {
     std::vector<std::vector<ftxui::Element>> rows_elements;
     std::lock_guard lock(mutex_);
     for (auto it = events_.rbegin(); it != events_.rend(); ++it) {
-      const T& event = *it;
+      const State& event = *it;
       RowType row = BuildRow(event);
       std::vector<ftxui::Element> cells;
       for (size_t i = 0; i < row.size(); ++i) {
@@ -107,7 +102,7 @@ class TableBody : public ITableBody {
 
  protected:
   mutable std::mutex mutex_;
-  std::vector<T> events_;
+  std::vector<State> events_;
   std::vector<size_t> col_widths_ = {10, 10, 10};
   rpp::subjects::publish_subject<RedrawSignal>& update_subject_;
 };

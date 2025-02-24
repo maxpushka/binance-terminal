@@ -11,7 +11,7 @@ import state;
 import ui.component;
 
 namespace widget {
-class MarketTradesBody final : public component::TableBody<state::Trade> {
+class MarketTradesBody final : public component::TableBody<state::Trade, state::Trade> {
  public:
   MarketTradesBody(const publish_subject<state::Trade>& trade_input,
                    publish_subject<component::RedrawSignal>& output)
@@ -30,7 +30,7 @@ class MarketTradesBody final : public component::TableBody<state::Trade> {
     });
   }
 
-  [[nodiscard]] RowType BuildRow(const state::Trade& trade) const override {
+  RowType BuildRow(const state::Trade& trade) const override {
     const auto truncated_event_time =
         std::chrono::floor<std::chrono::seconds>(trade.event_time);
     return {
@@ -40,7 +40,7 @@ class MarketTradesBody final : public component::TableBody<state::Trade> {
     };
   }
 
-  [[nodiscard]] ftxui::Element RenderCell(
+  ftxui::Element RenderCell(
       const std::string& cell, const size_t width, const size_t col_index,
       const state::Trade& trade) const override {
     using namespace ftxui;
@@ -70,5 +70,5 @@ ftxui::Component MarketTrades(
 }  // namespace widget
 
 namespace component {
-template class TableBody<state::Trade>;
+template class TableBody<state::Trade, state::Trade>;
 }  // namespace component
