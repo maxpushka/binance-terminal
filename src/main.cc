@@ -9,6 +9,8 @@
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "rpp/subjects/publish_subject.hpp"
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/basic_file_sink.h"
 
 import exchange;
 import state;
@@ -19,6 +21,9 @@ using namespace std::chrono_literals;
 using namespace ftxui;
 
 int main() {
+  auto file_sink = spdlog::basic_logger_mt("logger", "logs/basic-log.txt");
+  spdlog::set_default_logger(std::move(file_sink));
+
   boost::asio::io_context io_context;
 
   // Instantiate Binance client.
