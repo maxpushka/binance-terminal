@@ -11,7 +11,8 @@ import state;
 import ui.component;
 
 namespace widget {
-class MarketTradesBody final : public component::TableBody<state::Trade, state::Trade> {
+class MarketTradesBody final
+    : public component::TableBody<state::Trade, state::Trade> {
  public:
   MarketTradesBody(const publish_subject<state::Trade>& trade_input,
                    publish_subject<component::RedrawSignal>& output)
@@ -40,9 +41,9 @@ class MarketTradesBody final : public component::TableBody<state::Trade, state::
     };
   }
 
-  ftxui::Element RenderCell(
-      const std::string& cell, const size_t width, const size_t col_index,
-      const state::Trade& trade) const override {
+  ftxui::Element RenderCell(const std::string& cell, const size_t width,
+                            const size_t col_index,
+                            const state::Trade& trade) const override {
     using namespace ftxui;
     if (col_index == 0) {
       const Color price_color =

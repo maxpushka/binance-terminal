@@ -1,6 +1,6 @@
 module;
-#include <ranges>
 #include <mutex>
+#include <ranges>
 
 #include "ftxui/component/component.hpp"
 #include "rpp/subjects/publish_subject.hpp"
@@ -10,14 +10,13 @@ module ui.widget;
 import state;
 
 namespace widget {
-class OrderBookSideBody final : public component::TableBody<
-      state::OrderBookSide, state::OrderBookEntry> {
-public:
+class OrderBookSideBody final
+    : public component::TableBody<state::OrderBookSide, state::OrderBookEntry> {
+ public:
   OrderBookSideBody(
       const publish_subject<state::OrderBookSide>& order_book_input,
       publish_subject<component::RedrawSignal>& output)
-    : TableBody(order_book_input, output) {
-  }
+      : TableBody(order_book_input, output) {}
 
   void ProcessEvent(const state::OrderBookSide& event) override {
     std::lock_guard lock(mutex_);
@@ -30,24 +29,23 @@ public:
     return {
         std::to_string(entry.price),
         std::to_string(entry.quantity),
-        total > 1000
-          ? std::format("{:.2f}K", total / 1000)
-          : std::to_string(total),
+        total > 1000 ? std::format("{:.2f}K", total / 1000)
+                     : std::to_string(total),
     };
   }
 };
 
 class OrderBookMidPrice final : public ftxui::ComponentBase {
-public:
-  OrderBookMidPrice(const publish_subject<state::OrderBook>& order_book_input,
-                    const publish_subject<state::Trade>&
-                    quote_to_usdt_trades_input,
-                    publish_subject<component::RedrawSignal>& output)
-    : update_subject_{output} {
+ public:
+  OrderBookMidPrice(
+      const publish_subject<state::OrderBook>& order_book_input,
+      const publish_subject<state::Trade>& quote_to_usdt_trades_input,
+      publish_subject<component::RedrawSignal>& output)
+      : update_subject_{output} {
     order_book_input.get_observable().subscribe(
         [this](const state::OrderBook& ob) {
           if (ob.bids.empty() && ob.asks.empty()) {
-            return; // TODO: handle case where there are no bids or asks.
+            return;  // TODO: handle case where there are no bids or asks.
           }
           {
             // For bids, the best (highest) price is at the end of the map.
@@ -73,14 +71,20 @@ public:
     std::lock_guard lock(mutex_);
 
     // Choose color and arrow direction based on price movement.
-    constexpr std::array colors = {ftxui::Color::Green, ftxui::Color::Red,};
-    constexpr std::array arrows = {ftxui::Color::Green, ftxui::Color::Red,};
+    constexpr std::array colors = {
+        ftxui::Color::Green,
+        ftxui::Color::Red,
+    };
+    constexpr std::array arrows = {
+        ftxui::Color::Green,
+        ftxui::Color::Red,
+    };
     const bool is_up = mid_price_ > prev_mid_price;
     const auto color = colors[is_up];
     const auto arrow = arrows[is_up];
 
     // Draw order book mid-price
-    ftxui::Canvas c{80, 25}; // TODO: compute canvas size dynamically.
+    ftxui::Canvas c{80, 25};  // TODO: compute canvas size dynamically.
     const int current_x = DrawNumber(c, mid_price_, 0, 0, color);
     DrawDigit(c, arrow, current_x, 0, color);
 
@@ -90,12 +94,13 @@ public:
     });
   }
 
-private:
-  // Convert a floating-point number to a string and draw each character in pixel-art style.
+ private:
+  // Convert a floating-point number to a string and draw each character in
+  // pixel-art style.
   static int DrawNumber(ftxui::Canvas& canvas, const float number,
-                 const int offset_x = 0,
-                 const int offset_y = 0, const int spacing = 1,
-                 const ftxui::Color& color = ftxui::Color::White) {
+                        const int offset_x = 0, const int offset_y = 0,
+                        const int spacing = 1,
+                        const ftxui::Color& color = ftxui::Color::White) {
     const std::string num_str = std::to_string(number);
     int current_x = offset_x;
     for (const char ch : num_str) {
@@ -106,13 +111,14 @@ private:
     return current_x;
   }
 
-  // Draw a single digit (or dot) on the canvas starting at (offset_x, offset_y).
-  // For each non-space pixel in our pattern, we use DrawPoint to “turn on” that pixel
-  // with a blue color.
-  static void DrawDigit(ftxui::Canvas& canvas, const char digit, const int offset_x,
-                 const int offset_y, const ftxui::Color& color) {
+  // Draw a single digit (or dot) on the canvas starting at (offset_x,
+  // offset_y). For each non-space pixel in our pattern, we use DrawPoint to
+  // “turn on” that pixel with a blue color.
+  static void DrawDigit(ftxui::Canvas& canvas, const char digit,
+                        const int offset_x, const int offset_y,
+                        const ftxui::Color& color) {
     const auto it = DIGITS.find(digit);
-    if (it == DIGITS.end()) return; // unsupported character.
+    if (it == DIGITS.end()) return;  // unsupported character.
     const auto& pattern = it->second;
     for (size_t y = 0; y < pattern.size(); ++y) {
       for (size_t x = 0; x < pattern[y].size(); ++x) {
@@ -134,21 +140,21 @@ private:
   static const std::unordered_map<char, std::array<std::string, 5>> DIGITS;
 };
 
-const std::unordered_map<char, std::array<std::string, 5>> OrderBookMidPrice::DIGITS = {
-  {'0', {"###", "# #", "# #", "# #", "###"}},
-  {'1', {"  #", "  #", "  #", "  #", "  #"}},
-  {'2', {"###", "  #", "###", "#  ", "###"}},
-  {'3', {"###", "  #", "###", "  #", "###"}},
-  {'4', {"# #", "# #", "###", "  #", "  #"}},
-  {'5', {"###", "#  ", "###", "  #", "###"}},
-  {'6', {"###", "#  ", "###", "# #", "###"}},
-  {'7', {"###", "  #", "  #", "  #", "  #"}},
-  {'8', {"###", "# #", "###", "# #", "###"}},
-  {'9', {"###", "# #", "###", "  #", "###"}},
-  {'.', {"   ", "   ", "   ", " ##", " ##"}},
-  {arrow_up, {" # ", "###", " # ", " # ", " # "}},
-  {arrow_down, {" # ", " # ", " # ", "###", " # "}}
-};
+const std::unordered_map<char, std::array<std::string, 5>>
+    OrderBookMidPrice::DIGITS = {
+        {'0', {"###", "# #", "# #", "# #", "###"}},
+        {'1', {"  #", "  #", "  #", "  #", "  #"}},
+        {'2', {"###", "  #", "###", "#  ", "###"}},
+        {'3', {"###", "  #", "###", "  #", "###"}},
+        {'4', {"# #", "# #", "###", "  #", "  #"}},
+        {'5', {"###", "#  ", "###", "  #", "###"}},
+        {'6', {"###", "#  ", "###", "# #", "###"}},
+        {'7', {"###", "  #", "  #", "  #", "  #"}},
+        {'8', {"###", "# #", "###", "# #", "###"}},
+        {'9', {"###", "# #", "###", "  #", "###"}},
+        {'.', {"   ", "   ", "   ", " ##", " ##"}},
+        {arrow_up, {" # ", "###", " # ", " # ", " # "}},
+        {arrow_down, {" # ", " # ", " # ", "###", " # "}}};
 
 // OrderBook function constructs the order book widget
 // with the following structure:
@@ -176,9 +182,8 @@ ftxui::Component OrderBook(
   auto header = std::make_shared<component::TableHeader>(header_input, output);
   auto asks = std::make_shared<OrderBookSideBody>(asks_subject, output);
   auto bids = std::make_shared<OrderBookSideBody>(bids_subject, output);
-  auto mid_price = std::make_shared<OrderBookMidPrice>(order_book_input,
-    quote_to_usdt_trades_input,
-    output);
+  auto mid_price = std::make_shared<OrderBookMidPrice>(
+      order_book_input, quote_to_usdt_trades_input, output);
 
   // Create the widget
   return ftxui::Renderer([&header, &asks, &mid_price, &bids] {
@@ -191,4 +196,4 @@ ftxui::Component OrderBook(
     });
   });
 }
-} // namespace widget
+}  // namespace widget

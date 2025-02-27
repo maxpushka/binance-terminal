@@ -59,8 +59,10 @@ class TableBody : public ITableBody {
 
   [[nodiscard]] virtual RowType BuildRow(const State& event) const = 0;
 
-  [[nodiscard]] virtual ftxui::Element RenderCell(const std::string& cell, const size_t width,
-                                    const size_t col_index, const State& event) const {
+  [[nodiscard]] virtual ftxui::Element RenderCell(const std::string& cell,
+                                                  const size_t width,
+                                                  const size_t col_index,
+                                                  const State& event) const {
     using namespace ftxui;
     return text(cell) | size(WIDTH, EQUAL, static_cast<int>(width)) |
            color(Color::White);

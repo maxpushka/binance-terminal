@@ -9,8 +9,8 @@
 #include "ftxui/component/component.hpp"
 #include "ftxui/component/screen_interactive.hpp"
 #include "rpp/subjects/publish_subject.hpp"
-#include "spdlog/spdlog.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "spdlog/spdlog.h"
 
 import exchange;
 import state;
@@ -31,20 +31,22 @@ int main() {
   exchange::WebSocketAPI api(io_context);
   // Start the IO coroutines.
   boost::asio::co_spawn(io_context, ws.run(), boost::asio::detached);
-    boost::asio::co_spawn(io_context, api.run(), boost::asio::detached);
+  boost::asio::co_spawn(io_context, api.run(), boost::asio::detached);
 
   // Set up stream handlers.
   auto trade_handler = std::make_unique<state::TradeHandler>();
   auto order_book_handler = std::make_unique<state::OrderBookHandler>(api);
 
-  // WARN: moving the following subject fetching lines below the co_spawn will cause invalid reference error.
+  // WARN: moving the following subject fetching lines below the co_spawn will
+  // cause invalid reference error.
   const auto& trade_subject = trade_handler->get_subject();
   const auto& order_book_subject = order_book_handler->get_subject();
 
   // Subscribe to the market data stream.
   boost::asio::co_spawn(
       io_context,
-      [&ws, &trade_handler, &order_book_handler] -> boost::asio::awaitable<void> {
+      [&ws, &trade_handler,
+       &order_book_handler] -> boost::asio::awaitable<void> {
         constexpr auto market = "btcusdt";
         co_await ws.subscribe(market, std::move(trade_handler));
         co_await ws.subscribe(market, std::move(order_book_handler));
@@ -85,5 +87,5 @@ int main() {
   // Clean up.
   shutdown_handler();  // in case user hits Ctrl+C instead of ESC.
   io_thread.join();
-  return EXIT_SUCCESS;
+  return 0;
 }

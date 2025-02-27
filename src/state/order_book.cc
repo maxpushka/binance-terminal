@@ -71,8 +71,8 @@ boost::asio::awaitable<void> OrderBookHandler::handle(
       "Order book update received: "
       "first_update_id={} last_update_id={} "
       "(bids: {}, asks: {})",
-      update.first_update_id, update.last_update_id,
-      update.bids.size(), update.asks.size());
+      update.first_update_id, update.last_update_id, update.bids.size(),
+      update.asks.size());
 
   if (!initialized_) {
     // Buffer the update until the snapshot is applied.
@@ -171,8 +171,7 @@ boost::asio::awaitable<void> OrderBookHandler::handle(
     co_return;
   }
   apply_update(update);
-  spdlog::debug("Applied update: new current_update_id={}",
-                current_update_id_);
+  spdlog::debug("Applied update: new current_update_id={}", current_update_id_);
 
   // Publish the update so that other components can use it.
   subject_.get_observer().on_next(order_book_);

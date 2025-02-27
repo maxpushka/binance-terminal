@@ -1,6 +1,7 @@
 module;
 #include <atomic>
 #include <future>
+#include <ranges>
 #include <regex>
 
 #include "boost/asio/steady_timer.hpp"
@@ -29,10 +30,11 @@ WebSocketAPI::get_orderbook_snapshot(const std::string& market) {
   }
 
   // Convert to upper case
-  std::string uppercaseMarket;
-  for (const char c : market) {
-    uppercaseMarket.push_back(std::toupper(c));
-  }
+  namespace r = std::ranges;
+  namespace v = r::views;
+  const auto uppercaseMarket =
+      market | v::transform([](const char c) { return std::toupper(c); }) |
+      r::to<std::string>();
 
   co_await wait_for_connection();
   const int id = next_request_id_.fetch_add(1, std::memory_order_relaxed);

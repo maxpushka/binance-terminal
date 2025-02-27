@@ -5,6 +5,8 @@ project(terminal LANGUAGES CXX)
 # = Compilation Settings
 # ==================================================
 
+set(TERMINAL_BUILD_EXAMPLES ON CACHE BOOL "Build examples")
+
 # Configure options
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -133,6 +135,9 @@ target_link_libraries(ui PUBLIC ui.widget)
 add_executable(${PROJECT_NAME} src/main.cc)
 target_include_directories(${PROJECT_NAME} PRIVATE src ${Boost_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} PRIVATE exchange state ui)
+
+# ------------------- Examples -------------------
+add_subdirectory(examples)
 
 # ------------------- Tests -------------------
 # enable_testing()

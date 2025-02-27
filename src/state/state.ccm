@@ -78,14 +78,14 @@ export class OrderBookHandler final : public IState<OrderBook> {
 
   boost::asio::awaitable<void> handle(const nlohmann::json& data) override;
 
-  subjects::publish_subject<OrderBook>& get_subject()
-      const noexcept override {
+  subjects::publish_subject<OrderBook>& get_subject() const noexcept override {
     return subject_;
   }
 
  private:
-  mutable subjects::publish_subject<OrderBook> subject_{}; // used to publish processed updates
-  OrderBook order_book_{}; // local order book state
+  mutable subjects::publish_subject<OrderBook>
+      subject_{};           // used to publish processed updates
+  OrderBook order_book_{};  // local order book state
   exchange::WebSocketAPI& api_;
 
   // Buffer for incoming updates until we have applied the snapshot.
