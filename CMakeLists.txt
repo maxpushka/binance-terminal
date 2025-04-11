@@ -44,7 +44,7 @@ FetchContent_MakeAvailable(rpp)
 # ------------------- FTXUI -------------------
 FetchContent_Declare(ftxui
         GIT_REPOSITORY https://github.com/ArthurSonzogni/ftxui
-        GIT_TAG d75108e96058b6e00da6306a7d99c9555f645434
+        GIT_TAG 07fd3e685ade6275f718913720345134ed2e8242
         GIT_SHALLOW 1
 )
 FetchContent_MakeAvailable(ftxui)
@@ -62,7 +62,6 @@ FetchContent_MakeAvailable(ftxui)
 # ==================================================
 
 # ------------------- Libraries -------------------
-
 add_library(exchange STATIC)
 target_sources(exchange
         PUBLIC FILE_SET cxx_modules
